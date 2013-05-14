@@ -23,7 +23,6 @@ Here is a brief summary on what you need to do to use these modules:
 		 - cvmfs
 	1. Alternatively, you can skip steps **1** and **2** by downloading and install the RPM available in https://cern-cloudinit-modules.web.cern.ch/cern-cloudinit-modules/
 3. EXTRA STEP: if you are planning to do extensive testing and/or use these modules as default I would suggest you to either snapshot the current instance or bake your own Cloud Image from scratch with these modules included.
-
 4. Create your user-data file using the Cloud Config structure and refer to the services you want to install and configure.
 
 You can configure several parameters for each one of the services. Here are two minimal examples of user-data files that you could use during instantiation: 
