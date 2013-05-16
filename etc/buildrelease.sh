@@ -65,30 +65,45 @@ if [ -f $GIT_DIR/rpm/cern-cloudinit-modules*.rpm ]; then
         RPM_NAME=`basename $GIT_DIR/rpm/cern-cloudinit* .noarch.rpm`
         CURRENT_REL=${RPM_NAME:${#RPM_NAME} - 1}
         echo "Current Release: "$CURRENT_REL
-        NEW_REL=$CURRENT_REL+1
-        echo "By default the new release will be: "$NEW_REL
-
-        OLD_LINE='Release: 1'
-        NEW_LINE='Release: '$NEW_REL
-
-        SPEC_FILE_NAME=`basename cern*.spec`
-        sed -i 's/'$OLD_LINE'/'$NEW_LINE'/g' $SPEC_FILE_NAME
-
-
-        # TODO: Allow to modify the version
 else
         if [ -f cern*.spec ]; then
                 echo "There is no available RPM but there is a SPEC file.\n"
                 echo "Current "`cat cern*.spec | grep Release`
-
+		CURRENT_REL=`cat cern*.spec | grep Release | awk '{print $2}'`
         else
                 echo "The RPM and respective SPEC file weren't found. Exiting script..."
                 exit 3
         fi
 fi
 
+NEW_REL=$CURRENT_REL+1
 
+echo "By default the new release will be: "$NEW_REL
 
+OLD_LINE='Release: '$CURRENT_REL
+NEW_LINE='Release: '$NEW_REL
+               
+SPEC_FILENAME=`basename cern*.spec`
+sed -i 's/'$OLD_LINE'/'$NEW_LINE'/g' $SPEC_FILENAME
+
+rpmbuild -bb --sign $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
+if [ $? -ne 0 ]; then
+	error=$?
+        sed -i 's/'$NEW_LINE'/'$OLD_LINE'/g' $SPEC_FILENAME
+        echo "You don't have the means to build a valid RPM."
+        echo "Please check if you have rpm-build installed and a valid gpg key to sign the RPM."
+        echo "Exiting..."
+        exit $error
+fi
+        
+mv -f noarch/cern*.rpm $GIT_DIR/rpm/
+rm -fr noarch/
+
+echo "New RPM was created. Creating repodata..."
+createrepo $GIT_DIR/rpm/
+
+echo "Ready to upload new data to website!"
+# TODO: Allow to modify the version
 
 
 
@@ -106,8 +121,12 @@ else
         sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER
 fi
 
+cp -fr $GIT_DIR/rpm/repodata/ $MOUNT_DIR/Websites/c/cern-cloudinit-modules/
+cp -f $GIT_DIR/rpm/cern*$NEW_REL.noarch.rpm $MOUNT_DIR/Websites/c/cern-cloudinit-modules/
 
 echo "Unmounting DFS..."
 sudo umount $MOUNT_DIR
+
+echo "Finished. Bye!"
 
 exit 0
