@@ -23,7 +23,6 @@ mv cc_ganglia.py /usr/lib/python2.6/site-packages/cloudinit/CloudConfig/
 mv cc_cvmfs.py /usr/lib/python2.6/site-packages/cloudinit/CloudConfig/
 mv cc_condor.py /usr/lib/python2.6/site-packages/cloudinit/CloudConfig/
 
-rm cern-cloudinit-modules.tar
 
 %build
 
