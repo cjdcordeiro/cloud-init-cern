@@ -15,9 +15,9 @@ fi
 CURRENT_DIR=`pwd`
 GIT_DIR=${CURRENT_DIR%/*}
 GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`
-if [ $GIT_BRANCH -ne "devel" ]; then
-        echo "Attention: this script is meant to run on the devel branch. Exiting..."
-        exit 3
+if [ $GIT_BRANCH != "devel" ]; then
+        echo "Attention: this script is meant to run on the devel branch. Changing..."
+        git checkout devel
 fi
 
 # Creating tag
@@ -77,7 +77,7 @@ else
         fi
 fi
 
-NEW_REL=${CURRENT_REL+1}
+NEW_REL=`expr $CURRENT_REL + 1`
 
 echo "By default the new release will be: "$NEW_REL
 
@@ -85,7 +85,7 @@ OLD_LINE='Release: '$CURRENT_REL
 NEW_LINE='Release: '$NEW_REL
   
 SPEC_FILENAME=`basename cern*.spec`
-echo $OLD_LINE $N0EW_LINE $SPEC_FILENAME
+echo $OLD_LINE $NEW_LINE $SPEC_FILENAME
 sed -i 's/'$OLD_LINE'/'$NEW_LINE'/g' $SPEC_FILENAME
 
 rpmbuild -bb --sign $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
