@@ -1,4 +1,7 @@
-test in Fri May 17 12:25:38 CEST 2013
+test in Tue May 21 11:02:34 CEST 2013
+  - Small change on the repo file. No gpgcheck needed
+  - Adding functional buildrelease.sh
+  - test
   - test2
   - test
   - test2
