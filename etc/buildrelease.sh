@@ -122,8 +122,8 @@ else
         sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER
 fi
 
-cp -fr $GIT_DIR/rpm/repodata/ $MOUNT_DIR/Websites/c/cern-cloudinit-modules/
-cp -f $GIT_DIR/rpm/cern*$NEW_REL.noarch.rpm $MOUNT_DIR/Websites/c/cern-cloudinit-modules/
+cp -fr $GIT_DIR/rpm/repodata/ $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
+cp -f $GIT_DIR/rpm/cern*$NEW_REL.noarch.rpm $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
 
 echo "Unmounting DFS..."
 sudo umount $MOUNT_DIR
