@@ -31,10 +31,12 @@ aux=1
 while [ $aux ]
 do
         read -p "What is the tag version that should be created?" TAG_VERSION
-        if git show-ref --verify "refs/tags/${TAG_VERSION}"; then
+	git show-ref --verify --quiet "refs/tags/${TAG_VERSION}"
+        if [ $? -eq 0 ]; then
                 echo "That version already exists, please choose another or Ctrl+C to abort"
         else
                 aux=0
+		break;
         fi
 done
 
