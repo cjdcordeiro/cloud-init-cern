@@ -15,9 +15,9 @@ fi
 CURRENT_DIR=`pwd`
 GIT_DIR=${CURRENT_DIR%/*}
 GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`
-if [ $GIT_BRANCH -ne "devel" ]; then
-        echo "Attention: this script is meant to run on the devel branch. Exiting..."
-        exit 3
+if [ $GIT_BRANCH != "devel" ]; then
+        echo "Attention: this script is meant to run on the devel branch. Changing..."
+        git checkout devel
 fi
 
 # Creating tag
@@ -31,10 +31,11 @@ aux=1
 while [ $aux ]
 do
         read -p "What is the tag version that should be created?" TAG_VERSION
-        if git show-ref --verify "refs/tags/${TAG_VERSION}"; then
+	git show-ref --verify --quiet "refs/tags/${TAG_VERSION}"
+        if [ $? -eq 0 ]; then
                 echo "That version already exists, please choose another or Ctrl+C to abort"
         else
-                aux=0
+		break;
         fi
 done
 
@@ -44,7 +45,7 @@ echo "Writing CHANGELOG for new tag "$TAG_VERSION
 echo "${TAG_VERSION} in "`date` > $GIT_DIR/CHANGELOG
 git log --pretty=format:'  - %s' ${LAST_TAG}.. >> $GIT_DIR/CHANGELOG
 read -p "Would you like to add/modify something in the CHANGELOG?y/n(other key)" ADD_CHANGELOG
-if [ $ADD_CHANGELOG -eq 'y' || $ADD_CHANGELOG -eq 'Y' ]; then
+if [ $ADD_CHANGELOG -eq 'y' -o $ADD_CHANGELOG -eq 'Y' ]; then
         ${EDITOR:-vi} $GIT_DIR/CHANGELOG
 fi
 
@@ -76,15 +77,15 @@ else
         fi
 fi
 
-NEW_REL=$CURRENT_REL+1
+NEW_REL=`expr $CURRENT_REL + 1`
 
 echo "By default the new release will be: "$NEW_REL
 
 OLD_LINE='Release: '$CURRENT_REL
 NEW_LINE='Release: '$NEW_REL
-               
+  
 SPEC_FILENAME=`basename cern*.spec`
-sed -i 's/'$OLD_LINE'/'$NEW_LINE'/g' $SPEC_FILENAME
+sed -i "s/${OLD_LINE}/${NEW_LINE}/g" $SPEC_FILENAME
 
 rpmbuild -bb --sign $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
 if [ $? -ne 0 ]; then
