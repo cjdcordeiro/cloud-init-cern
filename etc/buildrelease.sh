@@ -35,7 +35,6 @@ do
         if [ $? -eq 0 ]; then
                 echo "That version already exists, please choose another or Ctrl+C to abort"
         else
-                aux=0
 		break;
         fi
 done
@@ -46,7 +45,7 @@ echo "Writing CHANGELOG for new tag "$TAG_VERSION
 echo "${TAG_VERSION} in "`date` > $GIT_DIR/CHANGELOG
 git log --pretty=format:'  - %s' ${LAST_TAG}.. >> $GIT_DIR/CHANGELOG
 read -p "Would you like to add/modify something in the CHANGELOG?y/n(other key)" ADD_CHANGELOG
-if [ $ADD_CHANGELOG -eq 'y' || $ADD_CHANGELOG -eq 'Y' ]; then
+if [ $ADD_CHANGELOG -eq 'y' -o $ADD_CHANGELOG -eq 'Y' ]; then
         ${EDITOR:-vi} $GIT_DIR/CHANGELOG
 fi
 
@@ -78,14 +77,15 @@ else
         fi
 fi
 
-NEW_REL=$CURRENT_REL+1
+NEW_REL=${CURRENT_REL+1}
 
 echo "By default the new release will be: "$NEW_REL
 
 OLD_LINE='Release: '$CURRENT_REL
 NEW_LINE='Release: '$NEW_REL
-               
+  
 SPEC_FILENAME=`basename cern*.spec`
+echo $OLD_LINE $N0EW_LINE $SPEC_FILENAME
 sed -i 's/'$OLD_LINE'/'$NEW_LINE'/g' $SPEC_FILENAME
 
 rpmbuild -bb --sign $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
