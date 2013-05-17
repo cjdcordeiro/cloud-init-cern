@@ -85,8 +85,7 @@ OLD_LINE='Release: '$CURRENT_REL
 NEW_LINE='Release: '$NEW_REL
   
 SPEC_FILENAME=`basename cern*.spec`
-echo $OLD_LINE $NEW_LINE $SPEC_FILENAME
-sed -i 's/'$OLD_LINE'/'$NEW_LINE'/g' $SPEC_FILENAME
+sed -i "s/${OLD_LINE}/${NEW_LINE}/g" $SPEC_FILENAME
 
 rpmbuild -bb --sign $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
 if [ $? -ne 0 ]; then
