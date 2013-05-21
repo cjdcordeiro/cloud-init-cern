@@ -101,7 +101,9 @@ if [ $? -ne 0 ]; then
         echo "Exiting..."
         exit $error
 fi
-        
+
+git add $SPEC_FILENAME 
+       
 mv -f noarch/cern*.rpm $GIT_DIR/rpm/
 rm -fr noarch/
 
