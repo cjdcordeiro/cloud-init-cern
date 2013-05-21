@@ -87,12 +87,13 @@ NEW_LINE='Release: '$NEW_REL
 SPEC_FILENAME=`basename cern*.spec`
 sed -i "s/${OLD_LINE}/${NEW_LINE}/g" $SPEC_FILENAME
 
-rpmbuild -bb --sign $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
+# TODO : Allow RPM signing
+rpmbuild -bb $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
 if [ $? -ne 0 ]; then
 	error=$?
         sed -i 's/'$NEW_LINE'/'$OLD_LINE'/g' $SPEC_FILENAME
         echo "You don't have the means to build a valid RPM."
-        echo "Please check if you have rpm-build installed and a valid gpg key to sign the RPM."
+        echo "Please check if you have rpm-build installed."
         echo "Exiting..."
         exit $error
 fi
