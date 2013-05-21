@@ -103,7 +103,9 @@ if [ $? -ne 0 ]; then
 fi
 
 git add $SPEC_FILENAME 
-       
+ 
+git rm -rf $GIT_DIR/rpm/repodata/
+      
 mv -f noarch/cern*.rpm $GIT_DIR/rpm/
 rm -fr noarch/
 

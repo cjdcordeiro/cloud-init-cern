@@ -1,4 +1,6 @@
-0.2-test2 in Tue May 21 11:52:51 CEST 2013
+0.2-test3 in Tue May 21 11:56:04 CEST 2013
+  - Adding RPM built from buildrelease script, on tag 0.2-test2
+  - 0.2-test2
   - Deleting old RPM's
   - Adding RPM built from buildrelease script, on tag 0.2-test
   - 0.2-test
