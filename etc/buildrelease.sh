@@ -87,6 +87,10 @@ NEW_LINE='Release: '$NEW_REL
 SPEC_FILENAME=`basename cern*.spec`
 sed -i "s/${OLD_LINE}/${NEW_LINE}/g" $SPEC_FILENAME
 
+OLD_CHECKOUT='git checkout '
+NEW_CHECKOUT="git checkout ${TAG_VERSION}"
+sed -i "s/${OLD_CHECKOUT}.*/${NEW_CHECKOUT}/g" $SPEC_FILENAME
+
 # TODO : Allow RPM signing
 rpmbuild -bb $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
 if [ $? -ne 0 ]; then
@@ -108,7 +112,6 @@ echo "Ready to upload new data to website!"
 # TODO: Allow to modify the version
 
 
-
 echo "To mount DFS you need to be root, please insert your root password below."
 
 MOUNT_DIR='/tmp/dfs/cern.ch/'
@@ -128,6 +131,11 @@ cp -f $GIT_DIR/rpm/cern*$NEW_REL.noarch.rpm $MOUNT_DIR'Websites/c/cern-cloudinit
 
 echo "Unmounting DFS..."
 sudo umount $MOUNT_DIR
+
+cd $GIT_DIR/rpm/
+git add *
+git commit -m "Adding RPM built from buildrelease script, on tag ${TAG_VERSION}"
+git push
 
 echo "Finished. Bye!"
 
