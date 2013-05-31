@@ -73,13 +73,18 @@ fi
 
 NEW_REL=$TAG_VERSION
 
-echo "By default the new release will be: "$NEW_REL
+echo "The new release will be: "$NEW_REL
 
 OLD_LINE='Release: '$CURRENT_REL
 NEW_LINE='Release: '$NEW_REL
-  
+NEW_LINE=`echo $NEW_LINE | sed -e 's/-//g'` 
+ 
 SPEC_FILENAME=`basename cern*.spec`
 sed -i "s/${OLD_LINE}/${NEW_LINE}/g" $SPEC_FILENAME
+
+OLD_VERSION='Version: '
+NEW_VERSION='Version: '`echo ${TAG_VERSION:0:1}`
+sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_FILENAME
 
 OLD_CHECKOUT='git checkout '
 NEW_CHECKOUT="git checkout ${TAG_VERSION}"
