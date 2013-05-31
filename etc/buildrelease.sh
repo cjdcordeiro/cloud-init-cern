@@ -62,22 +62,16 @@ echo "Tagging is done...Building a new RPM:"
 # RPM building
 # This file is supposed to be in the /etc/ directory. 
 # If it is not, this will fail
-if [ -f $GIT_DIR/rpm/cern-cloudinit-modules*.rpm ]; then
-        RPM_NAME=`basename $GIT_DIR/rpm/cern-cloudinit* .noarch.rpm`
-        CURRENT_REL=${RPM_NAME:${#RPM_NAME} - 1}
-        echo "Current Release: "$CURRENT_REL
+if [ -f cern*.spec ]; then
+        echo "There is no available RPM but there is a SPEC file.\n"
+        echo "Current "`cat cern*.spec | grep Release`
+	CURRENT_REL=`cat cern*.spec | grep Release | awk '{print $2}'`
 else
-        if [ -f cern*.spec ]; then
-                echo "There is no available RPM but there is a SPEC file.\n"
-                echo "Current "`cat cern*.spec | grep Release`
-		CURRENT_REL=`cat cern*.spec | grep Release | awk '{print $2}'`
-        else
-                echo "The RPM and respective SPEC file weren't found. Exiting script..."
-                exit 3
-        fi
+        echo "The SPEC file wasn't found. Exiting script..."
+        exit 3
 fi
 
-NEW_REL=`expr $CURRENT_REL + 1`
+NEW_REL=$TAG_VERSION
 
 echo "By default the new release will be: "$NEW_REL
 
