@@ -1,7 +1,2 @@
-0.1-pre2 in Mon Jun 3 11:08:10 CEST 2013
-  - Uploading last version of buildrelease and SPEC file
-  - making build release executable
-  - Adding RPM built from buildrelease script, on tag 0.2-test
-  - Making some general corrections on several files. Pushing tag. Adding first full version of buildrelease.sh
-  - README merged to main folder
-  - Adding new RPM (fetching corrected) working with YUM
+0.1-pre3 in Mon Jun 3 11:33:20 CEST 2013
+  - Adding RPM built from buildrelease script, on tag 0.1-pre2
