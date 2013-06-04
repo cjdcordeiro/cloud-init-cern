@@ -4,13 +4,45 @@
 ## Generates log file, tags and build RPM for CloudInit modules ##
 ##################################################################
 
-if [ $# -lt 1 ]; then
-        echo "Please insert your CERN username!"
+usage () {
+	echo "USAGE: ./buildrelease.sh [OPTIONS]=value"
+	echo -e '\nScript to tag and build a new release for the CloudInit modules.\n'
+	echo -e 'OPTIONS:\n'
+	echo -e '  --h\tHelp. Prints this output.'
+	echo -e '  --user\tSpecify the username of who is running the script. The same username that will be used to mount DFS.'
+	echo -e '  --tag\tName of the tag that will be created.'
+	echo -e '  --repo_dir\tDirectory where the RPM will be uploaded to (DFS by default).'
+	echo -e '  --code_url\tURL of the modules, where the RPM should fetch from.'  
+}
+
+USER=""
+TAG_VERSION=""
+REPO_DIR=""
+CODE_URL=""
+
+# Check for arguments
+while [ $# -ge 1 ]; do
+        case $1 in
+                --h ) usage
+                exit 1 ;;
+                --user=* ) USER=${1#*=}; shift;;
+                --tag=* ) TAG_VERSION=${1#*=}; shift;;
+                --repo_dir=* ) REPO_DIR=${1#*=}; shift;;
+                --code_url=* ) CODE_URL=${1#*=}; shift;;
+                -* ) usage
+                echo "Unrecognised options will be discarded." 
+		exit 1;;
+                * ) break ;;
+        esac
+done
+#----#
+
+if [ -z "$USER" ]; then
+        echo "You must specify an username. Please insert your CERN username!"
         read -p "User:" USER
-else
-        USER=$1
 fi
 
+echo "Welcome "$USER
 
 CURRENT_DIR=`pwd`
 GIT_DIR=${CURRENT_DIR%/*}
@@ -21,23 +53,32 @@ if [ $GIT_BRANCH != "devel" ]; then
 fi
 
 # Creating tag
-# TODO : Allow passing the tag version as argument
 echo "The current list of existing tags is:"
 git tag -l
 
 LAST_TAG=`git describe --abbrev=0`
 echo "The last tag version is "$LAST_TAG
-aux=1
-while [ $aux ]
-do
-        read -p "What is the tag version that should be created?" TAG_VERSION
+aux=0
+if [ ! -z "$TAG_VERSION" ]; then
 	git show-ref --verify --quiet "refs/tags/${TAG_VERSION}"
         if [ $? -eq 0 ]; then
-                echo "That version already exists, please choose another or Ctrl+C to abort"
-        else
-		break;
-        fi
-done
+        	echo "That version already exists, please choose another or Ctrl+C to abort"
+      		aux=1
+	fi
+fi
+if [ $aux -eq 1 -o -z "$TAG_VERSION" ]; then
+	while [ $aux ]
+	do
+        	read -p "What is the tag version that should be created?" TAG_VERSION
+		git show-ref --verify --quiet "refs/tags/${TAG_VERSION}"
+        	if [ $? -eq 0 ]; then
+                	echo "That version already exists, please choose another or Ctrl+C to abort"
+        	else
+			break;
+        	fi
+	done
+fi
+
 
 # ChangeLog file
 # git log --pretty=format:"%h - %an, %ar : %s" > FULL_LOG
@@ -89,6 +130,10 @@ OLD_CHECKOUT='git checkout '
 NEW_CHECKOUT="git checkout ${TAG_VERSION}"
 sed -i "s/${OLD_CHECKOUT}.*/${NEW_CHECKOUT}/g" $SPEC_FILENAME
 
+if [ ! -z "$CODE_URL" ]; then
+	#TODO
+fi
+
 # TODO : Allow RPM signing
 rpmbuild -bb $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
 if [ $? -ne 0 ]; then
@@ -111,12 +156,15 @@ echo "New RPM was created. Creating repodata..."
 createrepo $GIT_DIR/rpm/
 
 echo "Ready to upload new data to website!"
-# TODO: Allow to modify the version
-
 
 echo "To mount DFS you need to be root, please insert your root password below."
 
-MOUNT_DIR='/tmp/dfs/cern.ch/'
+if [ -z "$REPO_DIR" ]; then
+	REPO_DIR='/tmp/dfs/cern.ch/'
+fi
+
+MOUNT_DIR=$REPO_DIR
+
 mkdir -p $MOUNT_DIR
 if [ $# -ge 2 ]; then
         PASS=$2
