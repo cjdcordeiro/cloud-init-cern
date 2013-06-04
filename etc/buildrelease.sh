@@ -4,13 +4,45 @@
 ## Generates log file, tags and build RPM for CloudInit modules ##
 ##################################################################
 
-if [ $# -lt 1 ]; then
-        echo "Please insert your CERN username!"
+usage () {
+	echo "USAGE: ./buildrelease.sh [OPTIONS]=value"
+	echo -e '\nScript to tag and build a new release for the CloudInit modules.\n'
+	echo -e 'OPTIONS:\n'
+	echo -e '  --h\tHelp. Prints this output.'
+	echo -e '  --user\tSpecify the username of who is running the script. The same username that will be used to mount DFS.'
+	echo -e '  --tag\tName of the tag that will be created.'
+	echo -e '  --repo_dir\tDirectory where the RPM will be uploaded to (DFS by default).'
+	echo -e '  --code_url\tURL of the modules, where the RPM should fetch from.'  
+}
+
+USER=""
+TAG_VERSION=""
+REPO_DIR=""
+CODE_URL=""
+
+# Check for arguments
+while [ $# -ge 1 ]; do
+        case $1 in
+                --h ) usage
+                exit 1 ;;
+                --user=* ) USER=${1#*=}; shift;;
+                --tag=* ) TAG_VERSION=${1#*=}; shift;;
+                --repo_dir=* ) REPO_DIR=${1#*=}; shift;;
+                --code_url=* ) CODE_URL=${1#*=}; shift;;
+                -* ) usage
+                echo "Unrecognised options will be discarded." 
+		exit 1;;
+                * ) break ;;
+        esac
+done
+#----#
+
+if [ -z "$USER" ]; then
+        echo "You must specify an username. Please insert your CERN username!"
         read -p "User:" USER
-else
-        USER=$1
 fi
 
+echo "Welcome "$USER
 
 CURRENT_DIR=`pwd`
 GIT_DIR=${CURRENT_DIR%/*}
@@ -21,23 +53,32 @@ if [ $GIT_BRANCH != "devel" ]; then
 fi
 
 # Creating tag
-# TODO : Allow passing the tag version as argument
 echo "The current list of existing tags is:"
 git tag -l
 
 LAST_TAG=`git describe --abbrev=0`
 echo "The last tag version is "$LAST_TAG
-aux=1
-while [ $aux ]
-do
-        read -p "What is the tag version that should be created?" TAG_VERSION
+aux=0
+if [ ! -z "$TAG_VERSION" ]; then
 	git show-ref --verify --quiet "refs/tags/${TAG_VERSION}"
         if [ $? -eq 0 ]; then
-                echo "That version already exists, please choose another or Ctrl+C to abort"
-        else
-		break;
-        fi
-done
+        	echo "That version already exists, please choose another or Ctrl+C to abort"
+      		aux=1
+	fi
+fi
+if [ $aux -eq 1 -o -z "$TAG_VERSION" ]; then
+	while [ $aux ]
+	do
+        	read -p "What is the tag version that should be created?" TAG_VERSION
+		git show-ref --verify --quiet "refs/tags/${TAG_VERSION}"
+        	if [ $? -eq 0 ]; then
+                	echo "That version already exists, please choose another or Ctrl+C to abort"
+        	else
+			break;
+        	fi
+	done
+fi
+
 
 # ChangeLog file
 # git log --pretty=format:"%h - %an, %ar : %s" > FULL_LOG
@@ -45,7 +86,7 @@ echo "Writing CHANGELOG for new tag "$TAG_VERSION
 echo "${TAG_VERSION} in "`date` > $GIT_DIR/CHANGELOG
 git log --pretty=format:'  - %s' ${LAST_TAG}.. >> $GIT_DIR/CHANGELOG
 read -p "Would you like to add/modify something in the CHANGELOG?y/n(other key)" ADD_CHANGELOG
-if [ $ADD_CHANGELOG -eq 'y' -o $ADD_CHANGELOG -eq 'Y' ]; then
+if [ $ADD_CHANGELOG == 'y' -o $ADD_CHANGELOG == 'Y' ]; then
         ${EDITOR:-vi} $GIT_DIR/CHANGELOG
 fi
 
@@ -111,33 +152,32 @@ echo "New RPM was created. Creating repodata..."
 createrepo $GIT_DIR/rpm/
 
 echo "Ready to upload new data to website!"
-# TODO: Allow to modify the version
 
+echo "To mount you need to be root, please insert your root password below."
 
-echo "To mount DFS you need to be root, please insert your root password below."
-
-MOUNT_DIR='/tmp/dfs/cern.ch/'
-mkdir -p $MOUNT_DIR
-if [ $# -ge 2 ]; then
-        PASS=$2
-        # Ignore arguments that are not expected
-        sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER,password=$PASS
-else
-        echo "You didn't provide your NICE password as an argument!"
-        echo "This password is needed if you want to mount DFS. Please insert it now..."
-        sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER
+if [ -z "$REPO_DIR" ]; then
+	#TODO
+	NEW_URL=$REPO_DIR
 fi
 
-cp -fr $GIT_DIR/rpm/repodata/ $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
-cp -f $GIT_DIR/rpm/cern*$NEW_REL.noarch.rpm $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
+MOUNT_DIR='/tmp/dfs/cern.ch/'
 
-echo "Unmounting DFS..."
+mkdir -p $MOUNT_DIR
+
+sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER
+
+NEW_REL_NAME=`echo $NEW_REL | sed -e 's/-//g'`
+
+cp -fr $GIT_DIR/rpm/repodata/ $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
+cp -f $GIT_DIR/rpm/cern*$NEW_REL_NAME.noarch.rpm $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
+
+echo "Unmounting..."
 sudo umount $MOUNT_DIR
 
 cd $GIT_DIR/rpm/
 git add *
 git commit -m "Adding RPM built from buildrelease script, on tag ${TAG_VERSION}"
-git push
+git push -f
 
 echo "Finished. Bye!"
 
