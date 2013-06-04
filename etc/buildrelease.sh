@@ -86,7 +86,7 @@ echo "Writing CHANGELOG for new tag "$TAG_VERSION
 echo "${TAG_VERSION} in "`date` > $GIT_DIR/CHANGELOG
 git log --pretty=format:'  - %s' ${LAST_TAG}.. >> $GIT_DIR/CHANGELOG
 read -p "Would you like to add/modify something in the CHANGELOG?y/n(other key)" ADD_CHANGELOG
-if [ $ADD_CHANGELOG -eq 'y' -o $ADD_CHANGELOG -eq 'Y' ]; then
+if [ $ADD_CHANGELOG -eq 'y' ] || [ $ADD_CHANGELOG -eq 'Y' ]; then
         ${EDITOR:-vi} $GIT_DIR/CHANGELOG
 fi
 
@@ -132,6 +132,7 @@ sed -i "s/${OLD_CHECKOUT}.*/${NEW_CHECKOUT}/g" $SPEC_FILENAME
 
 if [ ! -z "$CODE_URL" ]; then
 	#TODO
+	NEW_URL=$CODE_URL
 fi
 
 # TODO : Allow RPM signing
