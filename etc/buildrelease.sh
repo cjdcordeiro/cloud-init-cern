@@ -153,7 +153,7 @@ createrepo $GIT_DIR/rpm/
 
 echo "Ready to upload new data to website!"
 
-echo "To mount DFS you need to be root, please insert your root password below."
+echo "To mount you need to be root, please insert your root password below."
 
 if [ -z "$REPO_DIR" ]; then
 	#TODO
@@ -163,22 +163,15 @@ fi
 MOUNT_DIR='/tmp/dfs/cern.ch/'
 
 mkdir -p $MOUNT_DIR
-if [ $# -ge 2 ]; then
-        PASS=$2
-        # Ignore arguments that are not expected
-        sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER,password=$PASS
-else
-        echo "You didn't provide your NICE password as an argument!"
-        echo "This password is needed if you want to mount DFS. Please insert it now..."
-        sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER
-fi
+
+sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER
 
 NEW_REL_NAME=`echo $NEW_REL | sed -e 's/-//g'`
 
 cp -fr $GIT_DIR/rpm/repodata/ $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
 cp -f $GIT_DIR/rpm/cern*$NEW_REL_NAME.noarch.rpm $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
 
-echo "Unmounting DFS..."
+echo "Unmounting..."
 sudo umount $MOUNT_DIR
 
 cd $GIT_DIR/rpm/
