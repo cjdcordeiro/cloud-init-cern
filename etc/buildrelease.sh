@@ -86,7 +86,7 @@ echo "Writing CHANGELOG for new tag "$TAG_VERSION
 echo "${TAG_VERSION} in "`date` > $GIT_DIR/CHANGELOG
 git log --pretty=format:'  - %s' ${LAST_TAG}.. >> $GIT_DIR/CHANGELOG
 read -p "Would you like to add/modify something in the CHANGELOG?y/n(other key)" ADD_CHANGELOG
-if [ $ADD_CHANGELOG -eq 'y' ] || [ $ADD_CHANGELOG -eq 'Y' ]; then
+if [ $ADD_CHANGELOG == 'y' -o $ADD_CHANGELOG == 'Y' ]; then
         ${EDITOR:-vi} $GIT_DIR/CHANGELOG
 fi
 
@@ -130,11 +130,6 @@ OLD_CHECKOUT='git checkout '
 NEW_CHECKOUT="git checkout ${TAG_VERSION}"
 sed -i "s/${OLD_CHECKOUT}.*/${NEW_CHECKOUT}/g" $SPEC_FILENAME
 
-if [ ! -z "$CODE_URL" ]; then
-	#TODO
-	NEW_URL=$CODE_URL
-fi
-
 # TODO : Allow RPM signing
 rpmbuild -bb $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
 if [ $? -ne 0 ]; then
@@ -161,10 +156,11 @@ echo "Ready to upload new data to website!"
 echo "To mount DFS you need to be root, please insert your root password below."
 
 if [ -z "$REPO_DIR" ]; then
-	REPO_DIR='/tmp/dfs/cern.ch/'
+	#TODO
+	NEW_URL=$REPO_DIR
 fi
 
-MOUNT_DIR=$REPO_DIR
+MOUNT_DIR='/tmp/dfs/cern.ch/'
 
 mkdir -p $MOUNT_DIR
 if [ $# -ge 2 ]; then
