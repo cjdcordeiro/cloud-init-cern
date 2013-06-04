@@ -1,1 +1,14 @@
-e2 in Tue Jun 4 16:56:42 CEST 2013
+0.1-pre2 in Tue Jun 4 16:58:51 CEST 2013
+  - Adding RPM built from buildrelease script, on tag e2
+  - e2
+  - afsdasd
+  - Adding RPM built from buildrelease script, on tag 0.1-pre3
+  - 0.1-pre3
+  - Adding RPM built from buildrelease script, on tag 0.1-pre2
+  - 0.1-pre2
+  - Uploading last version of buildrelease and SPEC file
+  - making build release executable
+  - Adding RPM built from buildrelease script, on tag 0.2-test
+  - Making some general corrections on several files. Pushing tag. Adding first full version of buildrelease.sh
+  - README merged to main folder
+  - Adding new RPM (fetching corrected) working with YUM
