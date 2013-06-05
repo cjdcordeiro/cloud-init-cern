@@ -8,11 +8,11 @@ usage () {
 	echo "USAGE: ./buildrelease.sh [OPTIONS]=value"
 	echo -e '\nScript to tag and build a new release for the CloudInit modules.\n'
 	echo -e 'OPTIONS:\n'
-	echo -e '  --h\tHelp. Prints this output.'
+	echo -e '  --h\t\tHelp. Prints this output.'
 	echo -e '  --user\tSpecify the username of who is running the script. The same username that will be used to mount DFS.'
-	echo -e '  --tag\tName of the tag that will be created.'
-	echo -e '  --repo_dir\tDirectory where the RPM will be uploaded to (DFS by default).'
-	echo -e '  --code_url\tURL of the modules, where the RPM should fetch from.'  
+	echo -e '  --tag\t\tName of the tag that will be created.'
+	echo -e '  --repo_dir\tLocal directory where mounting (for DFS) shall be done.'
+	echo -e '  --code_url\tURL of repository where the code is.'  
 }
 
 USER=""
@@ -76,7 +76,7 @@ aux=0
 if [ ! -z "$TAG_VERSION" ]; then
 	git show-ref --verify --quiet "refs/tags/${TAG_VERSION}"
         if [ $? -eq 0 ]; then
-        	echo "That version already exists, please choose another or Ctrl+C to abort"
+        	echo "The version you want already exists, please choose another or Ctrl+C to abort"
       		aux=1
 	fi
 fi
@@ -86,7 +86,7 @@ if [ $aux -eq 1 -o -z "$TAG_VERSION" ]; then
         	read -p "What is the tag version that should be created?" TAG_VERSION
 		git show-ref --verify --quiet "refs/tags/${TAG_VERSION}"
         	if [ $? -eq 0 ]; then
-                	echo "That version already exists, please choose another or Ctrl+C to abort"
+                	echo "The version you want already exists, please choose another or Ctrl+C to abort"
         	else
 			break;
         	fi
@@ -111,7 +111,7 @@ git commit -a -s -m "$TAG_VERSION"
 echo "Creating new tag: "$TAG_VERSION
 git log --pretty=format:'  - %s' ${LAST_TAG}.. | git tag -a $TAG_VERSION -F -
 
-git push --tags
+git push --tags -f
 
 echo "Tagging is done...Building a new RPM:"
 # RPM building
