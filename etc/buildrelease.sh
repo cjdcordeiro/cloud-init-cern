@@ -179,7 +179,7 @@ echo "To mount you need to be root, please insert your root password below."
 MOUNT_DIR='/tmp/dfs/cern.ch/'
 
 if [ ! -z "$REPO_DIR" ]; then
-	MOUNT_DIR=$REPO_DIR
+	MOUNT_DIR=$REPO_DIR'/'
 fi
 
 mkdir -p $MOUNT_DIR
