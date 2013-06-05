@@ -45,7 +45,21 @@ fi
 echo "Welcome "$USER
 
 CURRENT_DIR=`pwd`
-GIT_DIR=${CURRENT_DIR%/*}
+
+if [ ! -z "$CODE_URL" ]; then
+	git clone $CODE_URL
+	if [ $? -eq 0 ]; then
+		error=$?
+		echo -e '\nFailed to clone git repo. Please check if you provided a valid URL.'
+		exit $error
+	fi
+	GIT_DIR=$CURRENT_DIR'/cloud-init-cern'
+else
+	GIT_DIR=${CURRENT_DIR%/*}
+fi
+
+cd $GIT_DIR
+
 GIT_BRANCH=`git rev-parse --abbrev-ref HEAD`
 if [ $GIT_BRANCH != "devel" ]; then
         echo "Attention: this script is meant to run on the devel branch. Changing..."
@@ -86,7 +100,7 @@ echo "Writing CHANGELOG for new tag "$TAG_VERSION
 echo "${TAG_VERSION} in "`date` > $GIT_DIR/CHANGELOG
 git log --pretty=format:'  - %s' ${LAST_TAG}.. >> $GIT_DIR/CHANGELOG
 read -p "Would you like to add/modify something in the CHANGELOG?y/n(other key)" ADD_CHANGELOG
-if [ $ADD_CHANGELOG == 'y' -o $ADD_CHANGELOG == 'Y' ]; then
+if [ $ADD_CHANGELOG == 'y' ] || [ $ADD_CHANGELOG == 'Y' ]; then
         ${EDITOR:-vi} $GIT_DIR/CHANGELOG
 fi
 
@@ -101,13 +115,13 @@ git push --tags
 
 echo "Tagging is done...Building a new RPM:"
 # RPM building
-# This file is supposed to be in the /etc/ directory. 
-# If it is not, this will fail
-if [ -f cern*.spec ]; then
-        echo "Current "`cat cern*.spec | grep Release`
-	CURRENT_REL=`cat cern*.spec | grep Release | awk '{print $2}'`
+
+SPEC_DIR=$CURRENT_DIR'/cern*.spec'	# The SPEC file must always be in the same directory as the script
+if [ -f $SPEC_DIR ]; then
+        echo "Current Release is "$LAST_TAG
+	CURRENT_REL=$LAST_TAG
 else
-        echo "The SPEC file wasn't found. Exiting script..."
+        echo "The SPEC file wasn't found. Make sure it is in the same folder as the script. Exiting..."
         exit 3
 fi
 
@@ -115,52 +129,58 @@ NEW_REL=$TAG_VERSION
 
 echo "The new release will be: "$NEW_REL
 
-OLD_LINE='Release: '$CURRENT_REL
+OLD_LINE='Release: '
 NEW_LINE='Release: '$NEW_REL
 NEW_LINE=`echo $NEW_LINE | sed -e 's/-//g'` 
  
-SPEC_FILENAME=`basename cern*.spec`
-sed -i "s/${OLD_LINE}/${NEW_LINE}/g" $SPEC_FILENAME
+SPEC_FILENAME=`basename $SPEC_DIR`
+SPEC_FULL_FILENAME=$CURRENT_DIR'/'$SPEC_FILENAME
+sed -i "s/${OLD_LINE}.*/${NEW_LINE}/g" $SPEC_FULL_FILENAME
 
 OLD_VERSION='Version: '
 NEW_VERSION='Version: '`echo ${TAG_VERSION:0:1}`
-sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_FILENAME
+sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_FULL_FILENAME
 
 OLD_CHECKOUT='git checkout '
 NEW_CHECKOUT="git checkout ${TAG_VERSION}"
-sed -i "s/${OLD_CHECKOUT}.*/${NEW_CHECKOUT}/g" $SPEC_FILENAME
+sed -i "s/${OLD_CHECKOUT}.*/${NEW_CHECKOUT}/g" $SPEC_FULL_FILENAME
 
 # TODO : Allow RPM signing
-rpmbuild -bb $GIT_DIR/etc/$SPEC_FILENAME --define "_rpmdir ."
+cd $CURRENT_DIR
+rpmbuild -bb $SPEC_FULL_FILENAME --define "_rpmdir ."
 if [ $? -ne 0 ]; then
 	error=$?
-        sed -i 's/'$NEW_LINE'/'$OLD_LINE'/g' $SPEC_FILENAME
+        sed -i "s/$NEW_LINE/$OLD_LINE$CURRENT_REL/g" $SPEC_FULL_FILENAME
         echo "You don't have the means to build a valid RPM."
         echo "Please check if you have rpm-build installed."
         echo "Exiting..."
         exit $error
 fi
 
-git add $SPEC_FILENAME 
-      
+if [ ! -z "$CODE_URL" ]; then
+	cp $SPEC_FILENAME $GIT_DIR/etc
+fi
+
 mv -f noarch/cern*.rpm $GIT_DIR/rpm/
 rm -fr noarch/
+
+cd $GIT_DIR/etc
+git add $SPEC_FILENAME 
 
 git rm -rf $GIT_DIR/rpm/repodata/
 
 echo "New RPM was created. Creating repodata..."
 createrepo $GIT_DIR/rpm/
 
-echo "Ready to upload new data to website!"
+echo "Ready to upload new data!"
 
 echo "To mount you need to be root, please insert your root password below."
 
-if [ -z "$REPO_DIR" ]; then
-	#TODO
-	NEW_URL=$REPO_DIR
-fi
-
 MOUNT_DIR='/tmp/dfs/cern.ch/'
+
+if [ ! -z "$REPO_DIR" ]; then
+	MOUNT_DIR=$REPO_DIR
+fi
 
 mkdir -p $MOUNT_DIR
 
