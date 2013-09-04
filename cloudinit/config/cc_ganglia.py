@@ -7,7 +7,15 @@
 #################################################################################
 
 import subprocess
-import cloudinit.config as cc
+try:
+  import cloudinit.CloudConfig as cc
+except ImportError:
+  import cloudinit.config as cc
+except:
+  print "There is something wrong with this module installation. Please verify and rerun."
+  import sys
+  sys.exit(0)
+
 import urllib
 import socket
 import re
