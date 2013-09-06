@@ -21,7 +21,11 @@ git checkout test
 
 echo "Copying the modules..."
 
-cp -f cloudinit/config/* /usr/lib/python2.6/site-packages/cloudinit/CloudConfig/
+if [ -d "/usr/lib/python2.6/site-packages/cloudinit/CloudConfig/" ]; then
+ cp -f cloudinit/config/* /usr/lib/python2.6/site-packages/cloudinit/CloudConfig/
+else
+ cp -f cloudinit/config/* /usr/lib/python2.6/site-packages/cloudinit/config/
+fi
 
 %build
 
