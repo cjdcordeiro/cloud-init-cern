@@ -1,6 +1,6 @@
 Name: cern-cloudinit-modules
-Version: t
-Release: test
+Version: 1
+Release: 1.0
 Summary: CERN services (cvmfs, ganglia and condor) modules for CloudInit	
 Requires: cloud-init git
 Group: IT-SDC-OL	
@@ -17,7 +17,7 @@ This RPM copies the cloud config modules of cvmfs, Ganglia and Condor to its res
 echo "Cloning the repository..."
 git clone https://github.com/cjdcordeiro/cloud-init-cern.git
 cd cloud-init-cern/
-git checkout test
+git checkout 1.0
 
 echo "Copying the modules..."
 
