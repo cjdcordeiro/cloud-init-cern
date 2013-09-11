@@ -143,6 +143,11 @@ NEW_VERSION='Version: '`echo ${TAG_VERSION:0:1}`
 sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_DIR_LATEST
 sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_DIR_OLD
 
+echo "* "`date +"%a %b %d %Y ${USER}"` >> $SPEC_DIR_LATEST
+echo "* "`date +"%a %b %d %Y ${USER}"` >> $SPEC_DIR_OLD
+echo "- Adding RPM built from buildrelease script, on tag ${TAG_VERSION}" >> $SPEC_DIR_LATEST
+echo "- Adding RPM built from buildrelease script, on tag ${TAG_VERSION}" >> $SPEC_DIR_OLD
+
 # TODO : Allow RPM signing
 cd $CURRENT_DIR
 rpmbuild -bb $SPEC_DIR_LATEST --define "_rpmdir ."
