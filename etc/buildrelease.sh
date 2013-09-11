@@ -2,6 +2,8 @@
 
 ##################################################################
 ## Generates log file, tags and build RPM for CloudInit modules ##
+##								##
+## 	by Cristovao Cordeiro <cristovao.cordeiro@cern.ch>	##
 ##################################################################
 
 usage () {
@@ -69,6 +71,7 @@ fi
 # Creating tag
 echo "The current list of existing tags is:"
 git tag -l
+#TODO: just verify when there isn't any tags to describe
 
 LAST_TAG=`git describe --abbrev=0`
 echo "The last tag version is "$LAST_TAG
