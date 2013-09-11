@@ -193,7 +193,7 @@ sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER
 
 NEW_REL_NAME=`echo $NEW_REL | sed -e 's/-//g'`
 
-cp -fr $GIT_DIR/rpm/ $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
+cp -fr $GIT_DIR/rpm/* $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
 
 echo "Unmounting..."
 sudo umount $MOUNT_DIR
