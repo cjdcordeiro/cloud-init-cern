@@ -116,12 +116,14 @@ git push --tags -f
 echo "Tagging is done...Building a new RPM:"
 # RPM building
 
-SPEC_DIR=$CURRENT_DIR'/cern*.spec'	# The SPEC file must always be in the same directory as the script
-if [ -f $SPEC_DIR ]; then
+SPEC_DIR_LATEST=$CURRENT_DIR'/cern-cloudinit-modules-latest.spec'	# The SPEC file must always be in the same directory as the script
+SPEC_DIR_OLD=$CURRENT_DIR'/cern-cloudinit-modules-older.spec'
+
+if [ -f $SPEC_DIR_LATEST ] || [ -f $SPEC_DIR_OLD ] ; then
         echo "Current Release is "$LAST_TAG
 	CURRENT_REL=$LAST_TAG
 else
-        echo "The SPEC file wasn't found. Make sure it is in the same folder as the script. Exiting..."
+        echo "The SPEC files weren't found. Make sure they are in the same folder as the script. Exiting..."
         exit 3
 fi
 
@@ -133,39 +135,42 @@ OLD_LINE='Release: '
 NEW_LINE='Release: '$NEW_REL
 NEW_LINE=`echo $NEW_LINE | sed -e 's/-//g'` 
  
-SPEC_FILENAME=`basename $SPEC_DIR`
-SPEC_FULL_FILENAME=$CURRENT_DIR'/'$SPEC_FILENAME
-sed -i "s/${OLD_LINE}.*/${NEW_LINE}/g" $SPEC_FULL_FILENAME
+sed -i "s/${OLD_LINE}.*/${NEW_LINE}/g" $SPEC_DIR_LATEST
+sed -i "s/${OLD_LINE}.*/${NEW_LINE}/g" $SPEC_DIR_OLD
 
 OLD_VERSION='Version: '
 NEW_VERSION='Version: '`echo ${TAG_VERSION:0:1}`
-sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_FULL_FILENAME
-
-OLD_CHECKOUT='git checkout '
-NEW_CHECKOUT="git checkout ${TAG_VERSION}"
-sed -i "s/${OLD_CHECKOUT}.*/${NEW_CHECKOUT}/g" $SPEC_FULL_FILENAME
+sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_DIR_LATEST
+sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_DIR_OLD
 
 # TODO : Allow RPM signing
 cd $CURRENT_DIR
-rpmbuild -bb $SPEC_FULL_FILENAME --define "_rpmdir ."
-if [ $? -ne 0 ]; then
+rpmbuild -bb $SPEC_DIR_LATEST --define "_rpmdir ."
+AUX_EXIT_CODE=$?
+rpmbuild -bb $SPEC_DIR_OLD --define "_rpmdir ."
+if [ $? -ne 0 ] || [ $AUX_EXIT_CODE -ne 0 ]; then
 	error=$?
-        sed -i "s/$NEW_LINE/$OLD_LINE$CURRENT_REL/g" $SPEC_FULL_FILENAME
+        sed -i "s/$NEW_LINE/$OLD_LINE$CURRENT_REL/g" $SPEC_DIR_LATEST
+	sed -i "s/$NEW_LINE/$OLD_LINE$CURRENT_REL/g" $SPEC_DIR_OLD
         echo "You don't have the means to build a valid RPM."
         echo "Please check if you have rpm-build installed."
         echo "Exiting..."
         exit $error
 fi
 
+SPEC_FILENAME_ONE=`basename $SPEC_DIR_LATEST`
+SPEC_FILENAME_TWO=`basename $SPEC_DIR_OLD`
 if [ ! -z "$CODE_URL" ]; then
-	cp $SPEC_FILENAME $GIT_DIR/etc
+	cp $SPEC_FILENAME_ONE $GIT_DIR/etc
+	cp $SPEC_FILENAME_TWO $GIT_DIR/etc
 fi
 
-mv -f noarch/cern*.rpm $GIT_DIR/rpm/
+git rm -f $GIT_DIR/rpm/cern*.rpm
+mv -fr noarch/cern*.rpm $GIT_DIR/rpm/
 rm -fr noarch/
 
 cd $GIT_DIR/etc
-git add $SPEC_FILENAME 
+git add $SPEC_FILENAME_ONE $SPEC_FILENAME_TWO
 
 git rm -rf $GIT_DIR/rpm/repodata/
 
@@ -188,8 +193,7 @@ sudo mount -t cifs //cerndfs.cern.ch/dfs $MOUNT_DIR -o user=$USER
 
 NEW_REL_NAME=`echo $NEW_REL | sed -e 's/-//g'`
 
-cp -fr $GIT_DIR/rpm/repodata/ $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
-cp -f $GIT_DIR/rpm/cern*$NEW_REL_NAME.noarch.rpm $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
+cp -fr $GIT_DIR/rpm/ $MOUNT_DIR'Websites/c/cern-cloudinit-modules/'
 
 echo "Unmounting..."
 sudo umount $MOUNT_DIR

@@ -1,16 +1,8 @@
-1.0 in Fri Sep 6 13:58:15 CEST 2013
-  - Making RPM compatible for SLC5 and SLC6
-  - Changing RPM to clone my this repo from now on
-  - Making the modules compatible with different CloudInit versions (for deployment reasons)
-  - Adding latest version of the modules. Already tested with uCernVM
-  - Adding the improved CI modules.
-  - Adding new condor module with temporary directories for the downloaded RPMs
-  - Adding updated condor module to accept rpm-url parameter
-  - Updating condor module to its new version dependencies (condor 8.0.0)
-  - Small fix on the buildrelease script
-  - Uploading last version of buildrelease and SPEC file
-  - making build release executable
-  - Adding RPM built from buildrelease script, on tag 0.2-test
-  - Making some general corrections on several files. Pushing tag. Adding first full version of buildrelease.sh
-  - README merged to main folder
-  - Adding new RPM (fetching corrected) working with YUM
+1.1 in Wed Sep 11 10:52:41 CEST 2013
+  - Updating tarball
+  - Solving conflicts
+  - Solving conflicts b4 merging with devel
+  - Adding new subpackaged RPMs for new and older versions of CloudInit
+  - Adding tar.gz of the modules
+  - Adding compressed file w/ the modules
+  - Adding RPM built from buildrelease script, on tag 1.0
