@@ -143,16 +143,17 @@ NEW_VERSION='Version: '`echo ${TAG_VERSION:0:1}`
 sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_DIR_LATEST
 sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_DIR_OLD
 
-echo "* "`date +"%a %b %d %Y ${USER}"` >> $SPEC_DIR_LATEST
-echo "* "`date +"%a %b %d %Y ${USER}"` >> $SPEC_DIR_OLD
-echo "- Adding RPM built from buildrelease script, on tag ${TAG_VERSION}" >> $SPEC_DIR_LATEST
-echo "- Adding RPM built from buildrelease script, on tag ${TAG_VERSION}" >> $SPEC_DIR_OLD
+# This must be in chronological order, otherwise it won't compile the RPM
+#echo "* "`date +"%a %b %d %Y ${USER}"` >> $SPEC_DIR_LATEST
+#echo "* "`date +"%a %b %d %Y ${USER}"` >> $SPEC_DIR_OLD
+#echo "- Adding RPM built from buildrelease script, on tag ${TAG_VERSION}" >> $SPEC_DIR_LATEST
+#echo "- Adding RPM built from buildrelease script, on tag ${TAG_VERSION}" >> $SPEC_DIR_OLD
 
 # TODO : Allow RPM signing
 cd $CURRENT_DIR
 rpmbuild -bb $SPEC_DIR_LATEST --define "_rpmdir ."
 AUX_EXIT_CODE=$?
-rpmbuild -bb $SPEC_DIR_OLD --define "_rpmdir ."
+rpmbuild -bb $SPEC_DIR_OLD --define "_rpmdir ." --define "_binary_filedigest_algorithm 1"  --define "_binary_payload 1"
 if [ $? -ne 0 ] || [ $AUX_EXIT_CODE -ne 0 ]; then
 	error=$?
         sed -i "s/$NEW_LINE/$OLD_LINE$CURRENT_REL/g" $SPEC_DIR_LATEST
