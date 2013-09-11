@@ -1,8 +1,2 @@
-1.1 in Wed Sep 11 10:52:41 CEST 2013
-  - Updating tarball
-  - Solving conflicts
-  - Solving conflicts b4 merging with devel
-  - Adding new subpackaged RPMs for new and older versions of CloudInit
-  - Adding tar.gz of the modules
-  - Adding compressed file w/ the modules
-  - Adding RPM built from buildrelease script, on tag 1.0
+1.0.1 in Wed Sep 11 10:54:56 CEST 2013
+  - Adding RPM built from buildrelease script, on tag 1.1

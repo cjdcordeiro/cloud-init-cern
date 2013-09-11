@@ -166,7 +166,7 @@ if [ ! -z "$CODE_URL" ]; then
 fi
 
 git rm -f $GIT_DIR/rpm/cern*.rpm
-mv -fr noarch/cern*.rpm $GIT_DIR/rpm/
+mv -f noarch/cern*.rpm $GIT_DIR/rpm/
 rm -fr noarch/
 
 cd $GIT_DIR/etc
