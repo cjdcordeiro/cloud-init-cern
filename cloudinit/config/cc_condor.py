@@ -184,7 +184,7 @@ def handle(_name, cfg, cloud, log, _args):
       f.write("DAEMON_LIST = "+DaemonList+'\n')
 
       if 'release-dir' in condor_cfg:
-        f.write("RELEASE_DIR = "+condor_cfg['release-directory']+'\n')
+        f.write("RELEASE_DIR = "+condor_cfg['release-dir']+'\n')
         
       if 'local-dir' in condor_cfg:
         f.write("LOCAL_DIR = "+condor_cfg['local-dir']+'\n')
