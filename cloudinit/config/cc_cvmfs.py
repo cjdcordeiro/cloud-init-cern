@@ -28,7 +28,7 @@ RPM_cmd = '/bin/rpm'
 YUM_cmd = '/usr/bin/yum'
 SERVICE_cmd = '/sbin/service'
 CHK_cmd = '/sbin/chkconfig'
-
+CHOWN_cmd = '/bin/chown'
 
 def install_cvmfs():
   # Let's retrieve the current cvmfs release
@@ -72,6 +72,14 @@ def install_cvmfs():
   os.system("export PATH=${PATH}:/usr/bin:/sbin; cvmfs_config chksetup")
                 #subprocess.check_call(['cvmfs_config','chksetup'])
 
+  try:
+    os.makedirs('/scratch/cvmfs2')
+  except OSError:
+    print 'Directory /scratch alreadys exists'
+    pass
+ 
+  subprocess.call([CHOWN_cmd,'-R','cvmfs:cvmfs','/scratch/cvmfs2'])
+
 ########################
 ########################
 
@@ -87,6 +95,8 @@ def config_cvmfs(lfile, dfile, cmsfile, params):
         flocal.write('CVMFS_CACHE_BASE='+value+'\n')
       if prop_name == 'default-domain':
         flocal.write('CVMFS_DEFAULT_DOMAIN='+value+'\n')
+      if prop_name == 'mount_rw':
+        flocal.write('CVMFS_MOUNT_RW='+value+'\n')
       if prop_name == 'http-proxy':
         flocal.write('CVMFS_HTTP_PROXY='+value+'\n')
       if prop_name == 'quota-limit':

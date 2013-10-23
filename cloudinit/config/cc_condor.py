@@ -21,6 +21,7 @@ import os
 import re
 import platform
 import tempfile
+import socket
 
 # In case this runs to early during the boot, the PATH environment can still be unset. Let's define each necessary command's path
 # Using subprocess calls so it raises exceptions directly from the child process to the parent
@@ -32,6 +33,7 @@ CAT_cmd = '/bin/cat'
 AWK_cmd = '/bin/awk'
 CP_cmd = '/bin/cp'
 RM_cmd = '/bin/rm'
+CHOWN_cmd = '/bin/chown'
 
 ###########
 ###########
@@ -103,6 +105,15 @@ def install_condor(install_from_repo=0,repo_url=''):
   os.environ['PATH'] = os.environ['PATH']+"/usr/sbin:/sbin"
   os.environ['CONDOR_CONFIG'] = "/etc/condor/condor_config"
   # This 'sourcing' is done here, instead of being done in the end, to avoid situation where the user logs in into the machine before the configuration is finished.
+ 
+  try:
+    os.makedirs('/scratch/condor')
+  except OSError:
+    print 'Directory /scratch alreadys exists'
+    pass
+
+  subprocess.call([CHOWN_cmd,'condor:condor','/scratch/condor'])
+
 
 ##############
 ##############
@@ -163,6 +174,7 @@ def handle(_name, cfg, cloud, log, _args):
     HostAllowRead = '*'
     HostAllowWrite = '*'
     SecDaemonAuthentication = 'OPTIONAL'
+    IPAddress = socket.gethostbyname(socket.gethostname()) 
 
     # PARAMETERS LIST
     if 'workernode' in condor_cc_cfg:
@@ -218,6 +230,8 @@ def handle(_name, cfg, cloud, log, _args):
 
       if 'allow-daemon' in condor_cfg:
         AllowDaemon = condor_cfg['allow-daemon']
+        if 'IP_ADDRESS' in AllowDaemon:
+          AllowDaemon = re.sub('IP_ADDRESS',IPAddress,AllowDaemon)
       f.write("ALLOW_DAEMON = "+str(AllowDaemon)+'\n')
 
       if 'starter-allow-runas-owner' in condor_cfg:
@@ -311,6 +325,26 @@ def handle(_name, cfg, cloud, log, _args):
       if 'kill' in condor_cfg:
         Kill = condor_cfg['kill']
       f.write("KILL = "+str(Kill)+'\n')
+
+      if 'pool-password' in condor_cfg:
+        pp = open('/root/pool_password','w')
+        pp.write(condor_cfg['pool-password'])
+        pp.close()
+
+      if 'rank' in condor_cfg:
+        f.write("RANK = "+str(condor_cfg['rank'])+'\n')
+
+      if 'filesystem-domain' in condor_cfg:
+        if 'ip_address' in condor_cfg['filesystem-domain'].lower():
+          f.write("FILESYSTEM_DOMAIN = "+str(IPAddress)+'\n')
+        else:
+          f.write("FILESYSTEM_DOMAIN = "+str(condor_cfg['filesystem-domain'])+'\n')
+
+      if 'hostallow-daemon' in condor_cfg:
+        HostAllowDaemon = condor_cfg['hostallow-daemon']
+        if 'IP_ADDRESS' in condor_cfg['hostallow-daemon']:
+          HostAllowDaemon = re.sub('IP_ADDRESS',IPAddress, condor_cfg['hostallow-daemon'])
+        f.write("HOSTALLOW_DAEMON = "+HostAllowDaemon+'\n')
 
 
       # End of parameters
