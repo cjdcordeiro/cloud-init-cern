@@ -1,451 +1,104 @@
-#################################################################################
-# Author: Cristovao Cordeiro <cristovao.cordeiro@cern.ch>			#
-#										#
-# Cloud Config module for Condor service. Testes and working on SLC6 machines.  #
-# Documentation in:								#
-# https://twiki.cern.ch/twiki/bin/view/LCG/CloudInit				#
-#################################################################################
+#/usr/bin/python
 
-import subprocess
-try:
-  import cloudinit.CloudConfig as cc
-except ImportError:
-  import cloudinit.config as cc
-except:
-  print "There is something wrong with this module installation. Please verify and rerun."
-  import sys
-  sys.exit(0)
-
-import urllib
 import os
-import re
-import platform
-import tempfile
+import pwd
 import socket
+import subprocess
+import multiprocessing
 
-# In case this runs to early during the boot, the PATH environment can still be unset. Let's define each necessary command's path
-# Using subprocess calls so it raises exceptions directly from the child process to the parent
-YUM_cmd = '/usr/bin/yum'
-GREP_cmd = '/bin/grep'
-RPM_cmd = '/bin/rpm'
-SERVICE_cmd = '/sbin/service'
-CAT_cmd = '/bin/cat'
-AWK_cmd = '/bin/awk'
-CP_cmd = '/bin/cp'
-RM_cmd = '/bin/rm'
-CHOWN_cmd = '/bin/chown'
-
-###########
-###########
-
-def install_condor(install_from_repo=0,repo_url=''):
-  # In case a RPM is being downloaded, let's do it in a temp file
-  tp = tempfile.NamedTemporaryFile()
-
-  print 'Starting Condor installation: '
-  print "Installing Condor dependencies..."
-  subprocess.check_call([YUM_cmd,"-y","install","libtool-ltdl","libvirt","perl-XML-Simple","openssl098e","compat-expat1","compat-openldap","perl-DateManip","perl-Time-HiRes","policycoreutils-python"])
-  #cc.install_packages(("yum-downloadonly","libtool-ltdl","libvirt","perl-XML-Simple","openssl098e","compat-expat1","compat-openldap","perl-DateManip","perl-Time-HiRes","policycoreutils-python",))
-
-  print 'Overwriting condor_config.local'
-
-  if install_from_repo:
-    try:
-      urllib.urlretrieve(repo_url, tp.name)
-      CondorRPM = tp.name
-      CondorVersion = "condor"
-    except:
-      print '\nATTENTION: the condor repository you provided is not valid. Skipping condor module...\n'
-      return
-  else:
-    CondorRepo = "http://www.cs.wisc.edu/condor/yum/repo.d/condor-stable-rhel6.repo"
-    urllib.urlretrieve(CondorRepo,'/etc/yum.repos.d/condor.repo')
-
-    # Defining the most suitable condor version for the machine
-    arch = str(platform.machine())
-    if arch == 'x86_64': arch = '.'+str(arch)
-    else:
-      arch = '.i'
-    version0 = subprocess.Popen([YUM_cmd,'info','condor%s' % arch], stdout=subprocess.PIPE)
-    version1 = subprocess.Popen([GREP_cmd,'Version   '], stdin=version0.stdout, stdout=subprocess.PIPE)
-    version0.stdout.close()
-    yum_version, verror = version1.communicate()
-    yum_version = re.sub('\n','', yum_version)
-    yum_version = re.sub(' ','',yum_version)
-    yum_condor_version = yum_version.split(':')
-
-    DownloadManually = False
-    # If CondorVersion is empty that it means that condor is not available on the yum repository or that some error has occured
-    if not yum_condor_version:
-      # In this case let's define and download manually the condor we want to install 
-      CondorVersion = "condor-8.0.0"  # Stable version
-      DownloadManually = True
-    else:
-      CondorVersion = 'condor-'+str(yum_condor_version[1])
-
-    if arch == '.i': arch == ''     # To avoid confusions between i386 and i686, which are 32 bits. So let's just 'yum install condor' in case the machine is 32 bits
-
-  if not install_from_repo:
-    if not DownloadManually:
-      subprocess.check_call([YUM_cmd,'-y','install','condor'+arch])
-      #cc.install_packages(('condor'+arch,))
-    else:
-      # If condor is not available in the yum repository (due to some odd reason) you can uncomment the following lines to donwload the .rpm directly from the source.
-      try:
-        # Download a version that will most certainly work in every machine.
-        urllib.urlretrieve('http://research.cs.wisc.edu/htcondor/yum/stable/rhel6/condor-8.0.0-133173.rhel6.4.i686.rpm', tp.name)
-      except:
-        print 'It was not possible to install Condor from any available source. Exiting condor setup...'
-        return
-      CondorRPM = tp.name
-      subprocess.check_call([RPM_cmd,"-ivh",CondorRPM])
-  else:
-    subprocess.check_call([RPM_cmd,"-ivh",CondorRPM])
-
-  os.environ['PATH'] = os.environ['PATH']+"/usr/sbin:/sbin"
-  os.environ['CONDOR_CONFIG'] = "/etc/condor/condor_config"
-  # This 'sourcing' is done here, instead of being done in the end, to avoid situation where the user logs in into the machine before the configuration is finished.
- 
-  try:
-    os.makedirs('/scratch/condor')
-  except OSError:
-    print 'Directory /scratch alreadys exists'
-    pass
-
-  subprocess.call([CHOWN_cmd,'condor:condor','/scratch/condor'])
-
-
-##############
-##############
+template = {
+        
+	# Defaults
+	'DAEMON_LIST' : 'MASTER, STARTD',
+	'HIGHPORT' : '24500',
+	'LOWPORT' : '20000',
+	'START' : 'TRUE',
+	'SUSPEND' : 'FALSE',
+	'PREEMPT' : 'FALSE',
+	'KILL' : 'FALSE',
+	'QUEUE_SUPER_USERS' : 'root, condor',
+	'ALLOW_WRITE' : 'condor@*.*',
+	'STARTER_ALLOW_RUNAS_OWNER' : 'False',
+	'ALLOW_DAEMON' : 'voatlas217.cern.ch',
+	'HOSTALLOW_DAEMON' : 'voatlas217.cern.ch',
+	'SEC_DEFAULT_AUTHENTICATION' : 'REQUIRED',
+	'SEC_DEFAULT_AUTHENTICATION_METHODS' : 'PASSWORD',
+	'SEC_PASSWORD_FILE' : '/root/pool_password',
+	'JAVA' : '/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/bin/java',
+	'RELEASE_DIR' : '/usr',
+	'LOCAL_DIR' : '/var',
+	'RANK' : '0',
+	
+	# Contex
+	'UID_DOMAIN' : None,
+        'GSITE' : None,
+        
+	# ATLAS
+	'CONDOR_HOST' : 'voatlas217.cern.ch',
+	'COLLECTOR_HOST' : 'voatlas217.cern.ch:20618',
+	'CONDOR_ADMIN' : 'root@voatlas217.cern.ch:20618',
+	'DEDICATED_EXECUTE_ACCOUNT_REGEXP' : 'atlcloud',
+	'USER_JOB_WRAPPER' : '/usr/local/bin/lcg-atlas',
+	'STARTD_ATTRS' : 'GSITE',
+	'ENABLE_SSH_TO_JOB' : 'True',
+	'CERTIFICATE_MAPFILE' : '/etc/condor/canonical_map',
+	'EXECUTE' : '/scratch/condor',
+	'STARTER_DEBUG' : 'D_FULLDEBUG',
+	'STARTD_DEBUG' : 'D_FULLDEBUG',
+	'UPDATE_COLLECTOR_WITH_TCP' : 'True',
+	'MAXJOBRETIREMENTTIME' : '48*3600',
+	'STARTD_CRON_JOBLIST' : '$(STARTD_CRON_JOBLIST) atlval',
+	'STARTD_CRON_ATLVAL_MODE' : 'Periodic',
+	'STARTD_CRON_ATLVAL_EXECUTABLE' : '/usr/libexec/atlval.sh',
+	'STARTD_CRON_ATLVAL_PERIOD' : '60s',
+	'STARTD_CRON_ATLVAL_JOB_LOAD' : '0.1',
+        'SLOT1_USER' : 'cuser1' 
+}
 
 def handle(_name, cfg, cloud, log, _args):
-  if 'condor' in cfg:
-    condor_cc_cfg = cfg['condor']    
-    if 'master' in condor_cc_cfg and 'workernode' in condor_cc_cfg:
-      print 'You can not set condor master and condor workernode in the same machine.\n'
-      print 'Exiting condor configuration...'
-      return
-    
-    Installation = False
-    Repo = False 
-    InstallFrom = ''
-
-    # If Install is False, this will assume that Condor is already installed in the destination
-    if 'install' in condor_cc_cfg:
-      Installation = condor_cc_cfg['install']
-		
-    # There is the possibilty of telling the module where to download Condor from		
-    if 'rpm-url' in condor_cc_cfg:
-      Repo = True
-      InstallFrom = condor_cc_cfg['rpm-url']
- 
-    # Condor configuration file
-    ConfigFile = '/root/condor_config.local'
-
-    # Default CONDOR_HOST
-    Host = subprocess.Popen(["hostname", "-f"], stdout=subprocess.PIPE)
-    Hostname, ReleaseErr = Host.communicate()
-    Hostname = re.sub('\n','',Hostname)      
-
-    if Installation == True:
-      install_condor(Repo, InstallFrom)
-
-    try:
-      subprocess.call([SERVICE_cmd,'condor','stop'])
-    except:
-      print 'Please check if the previous Condor version is correctly installed.\n'
-
-    # Write new configuration file
-    f = open(ConfigFile,'w')        
+    if not 'condor' in cfg:
+        return
+    else:
+        condor_cc_cfg = cfg['condor']   
 	
-    # Default variables    
-    DaemonList = 'MASTER, STARTD'
-    Highport = 24500
-    Lowport = 20000
-    CollectorHostPORT = 20001
-    Start = 'True'
-    Suspend = 'False'
-    Preempt = 'False'
-    Kill = 'False'
-    QueueSuperUsers = 'root, condor'        
-    AllowWrite = '*'
-    StarterAllowRunasOwner = 'False'
-    AllowDaemon = '*'
-    HostAllowRead = '*'
-    HostAllowWrite = '*'
-    SecDaemonAuthentication = 'OPTIONAL'
-    IPAddress = socket.gethostbyname(socket.gethostname()) 
+    # Add user provided values
+    for parameter in condor_cc_cfg:
+        if parameter in template:
+            template[parameter] = condor_cc_cfg[parameter]
 
-    # PARAMETERS LIST
-    if 'workernode' in condor_cc_cfg:
-      condor_cfg = condor_cc_cfg['workernode']
-      if 'condor-host' in condor_cfg:
-        Hostname = condor_cfg['condor-host']
-      f.write("CONDOR_HOST = "+str(Hostname)+'\n')
-      f.write("COLLECTOR_NAME = Personal Condor at "+Hostname+'\n')
-
-      CondorAdmin = Hostname
-      UIDDomain = Hostname        
-
-      if 'collector-host-port' in condor_cfg:
-        CollectorHostPORT = condor_cfg['collector-host-port']
-      f.write("COLLECTOR_HOST = "+str(Hostname)+':'+str(CollectorHostPORT)+'\n')
-
-      if 'daemon-list' in condor_cfg:
-        DaemonList = condor_cfg['daemon-list']
-      f.write("DAEMON_LIST = "+DaemonList+'\n')
-
-      if 'release-dir' in condor_cfg:
-        f.write("RELEASE_DIR = "+condor_cfg['release-dir']+'\n')
-        
-      if 'local-dir' in condor_cfg:
-        f.write("LOCAL_DIR = "+condor_cfg['local-dir']+'\n')
-    
-      if 'condor-admin' in condor_cfg:
-        CondorAdmin = condor_cfg['condor-admin']
-      f.write("CONDOR_ADMIN = "+str(CondorAdmin)+'\n')
-
-      if 'queue-super-users' in condor_cfg:
-        QueueSuperUsers = condor_cfg['queue-super-users']
-      f.write("QUEUE_SUPER_USERS = "+str(QueueSuperUsers)+'\n')
-
-      if 'highport' in condor_cfg:
-        Highport = condor_cfg['highport']
-      f.write("HIGHPORT = "+str(Highport)+'\n')
-
-      if 'lowport' in condor_cfg:
-        Lowport = condor_cfg['lowport']
-      f.write("LOWPORT = "+str(Lowport)+'\n')
-
-      if 'uid-domain' in condor_cfg:
-        UIDDomain = condor_cfg['uid-domain']
-      f.write("UID_DOMAIN = "+str(UIDDomain)+'\n')
-
-      if 'allow-write' in condor_cfg:
-        AllowWrite = condor_cfg['allow-write']    
-      f.write("ALLOW_WRITE = "+str(AllowWrite)+'\n')
-
-      if 'dedicated-execute-account-regexp' in condor_cfg:
-        f.write("DEDICATED_EXECUTE_ACCOUNT_REGEXP = "+str(condor_cfg['dedicated-execute-account-regexp'])+'\n')
-
-      if 'allow-daemon' in condor_cfg:
-        AllowDaemon = condor_cfg['allow-daemon']
-        if 'IP_ADDRESS' in AllowDaemon:
-          AllowDaemon = re.sub('IP_ADDRESS',IPAddress,AllowDaemon)
-      f.write("ALLOW_DAEMON = "+str(AllowDaemon)+'\n')
-
-      if 'starter-allow-runas-owner' in condor_cfg:
-        StarterAllowRunasOwner = condor_cfg['starter-allow-runas-owner']    
-      f.write("STARTER_ALLOW_RUNAS_OWNER = "+str(StarterAllowRunasOwner)+'\n')
-
-      if 'java' in condor_cfg:
-        f.write("JAVA = "+str(condor_cfg['java'])+'\n')
-
-      if 'user-job-wrapper' in condor_cfg:
-        f.write("USER_JOB_WRAPPER = "+str(condor_cfg['user-job-wrapper'])+'\n')
-
-      if 'gsite' in condor_cfg:
-        f.write("GSITE = "+str(condor_cfg['gsite'])+'\n')
-
-      if 'startd-attrs' in condor_cfg:
-        f.write("STARTD_ATTRS = "+str(condor_cfg['startd-attrs'])+'\n')
-
-      if 'enable-ssh-to-job' in condor_cfg:
-        f.write("ENABLE_SSH_TO_JOB = "+str(condor_cfg['enable-ssh-to-job'])+'\n')
-
-      if 'certificate-mapfile' in condor_cfg:
-        f.write("CERTIFICATE_MAPFILE = "+str(condor_cfg['certificate-mapfile'])+'\n')
-
-      if 'ccb-address' in condor_cfg:
-        f.write("CCB_ADDRESS = "+str(condor_cfg['ccb-address'])+'\n')
-    
-      if 'execute' in condor_cfg:
-        f.write("EXECUTE = "+str(condor_cfg['execute'])+'\n')        
-
-      if 'starter-debug' in condor_cfg:
-        f.write("STARTER_DEBUG = "+str(condor_cfg['starter-debug'])+'\n')
-
-      if 'startd-debug' in condor_cfg:
-        f.write("STARTD_DEBUG = "+str(condor_cfg['startd-debug'])+'\n')
-
-      if 'sec-default-authentication' in condor_cfg:
-        f.write("SEC_DEFAULT_AUTHENTICATION = "+str(condor_cfg['sec-default-authentication'])+'\n')
-
-      if 'sec-default-authentication-methods' in condor_cfg:
-        f.write("SEC_DEFAULT_AUTHENTICATION_METHODS = "+str(condor_cfg['sec-default-authentication-methods'])+'\n')
-
-      if 'sec-daemon-authentication' in condor_cfg:
-        SecDaemonAuthentication = condor_cfg['sec-daemon-authentication']
-      f.write("SEC_DAEMON_AUTHENTICATION = "+str(SecDaemonAuthentication)+'\n')
-
-      if 'sec-password-file' in condor_cfg:
-        f.write("SEC_PASSWORD_FILE = "+str(condor_cfg['sec-password-file'])+'\n')
-
-      if 'update-collector-with-tcp' in condor_cfg:
-        f.write("UPDATE_COLLECTOR_WITH_TCP = "+str(condor_cfg['update-collector-with-tcp'])+'\n')
-
-      if 'max-job-retirement-time' in condor_cfg:
-        f.write("MAXJOBRETIREMENTTIME = "+str(condor_cfg['max-job-retirement-time'])+'\n')
-
-      if 'startd-cron-joblist' in condor_cfg:
-        f.write("STARTD_CRON_JOBLIST = "+str(condor_cfg['startd-cron-joblist'])+'\n')
-
-      if 'startd-cron-atlval-mode' in condor_cfg:
-        f.write("STARTD_CRON_ATLVAL_MODE = "+str(condor_cfg['startd-cron-atlval-mode'])+'\n')
-
-      if 'startd-cron-atlval-executable' in condor_cfg:
-        f.write("STARTD_CRON_ATLVAL_EXECUTABLE = "+str(condor_cfg['startd-cron-atlval-executable'])+'\n')
-
-      if 'startd-cron-atlval-period' in condor_cfg:
-        f.write("STARTD_CRON_ATLVAL_PERIOD = "+str(condor_cfg['startd-cron-atlval-period'])+'\n')
-
-      if 'startd-cron-atlval-job-load' in condor_cfg:
-        f.write("STARTD_CRON_ATLVAL_JOB_LOAD = "+str(condor_cfg['startd-cron-atlval-job-load'])+'\n')
-
-      if 'hostallow-write' in condor_cfg:
-        HostAllowWrite = condor_cfg['hostallow-write']    
-      f.write("HOSTALLOW_WRITE = "+str(HostAllowWrite)+'\n')
-    
-      if 'hostallow-read' in condor_cfg:
-        HostAllowRead = condor_cfg['hostallow-read']    
-      f.write("HOSTALLOW_READ = "+str(HostAllowRead)+'\n')
-
-      if 'start' in condor_cfg:
-        Start = condor_cfg['start']
-      f.write("START = "+str(Start)+'\n')
-
-      if 'suspend' in condor_cfg:
-        Suspend = condor_cfg['suspend']
-      f.write("SUSPEND = "+str(Suspend)+'\n')
-
-      if 'preempt' in condor_cfg:
-        Preempt = condor_cfg['preempt']
-      f.write("PREEMPT = "+str(Preempt)+'\n')
-        
-      if 'kill' in condor_cfg:
-        Kill = condor_cfg['kill']
-      f.write("KILL = "+str(Kill)+'\n')
-
-      if 'pool-password' in condor_cfg:
-        pp = open('/root/pool_password','w')
-        pp.write(condor_cfg['pool-password'])
-        pp.close()
-
-      if 'rank' in condor_cfg:
-        f.write("RANK = "+str(condor_cfg['rank'])+'\n')
-
-      if 'filesystem-domain' in condor_cfg:
-        if 'ip_address' in condor_cfg['filesystem-domain'].lower():
-          f.write("FILESYSTEM_DOMAIN = "+str(IPAddress)+'\n')
-        else:
-          f.write("FILESYSTEM_DOMAIN = "+str(condor_cfg['filesystem-domain'])+'\n')
-
-      if 'hostallow-daemon' in condor_cfg:
-        HostAllowDaemon = condor_cfg['hostallow-daemon']
-        if 'IP_ADDRESS' in condor_cfg['hostallow-daemon']:
-          HostAllowDaemon = re.sub('IP_ADDRESS',IPAddress, condor_cfg['hostallow-daemon'])
-        f.write("HOSTALLOW_DAEMON = "+HostAllowDaemon+'\n')
-
-
-      # End of parameters
-      ##############################################################################
-            
-      # Dynamically writing SLOT users
-      CPUs_aux1 = subprocess.Popen([CAT_cmd, "/proc/cpuinfo"], stdout=subprocess.PIPE)
-      CPUs_aux2 = subprocess.Popen([GREP_cmd, "processor"], stdin=CPUs_aux1.stdout, stdout=subprocess.PIPE)
-      CPUs_aux1.stdout.close()
-
-      CPUs, cpuerr = CPUs_aux2.communicate()
-	    	
-      cid1 = subprocess.Popen([CAT_cmd, "/etc/passwd"], stdout=subprocess.PIPE)
-      cid2 = subprocess.Popen([GREP_cmd, "condor:"],stdin=cid1.stdout, stdout=subprocess.PIPE)
-      cid3 = subprocess.Popen([AWK_cmd, "-F:",'{print $3"."$4}'], stdin=cid2.stdout, stdout=subprocess.PIPE)
-      cid1.stdout.close()
-      cid2.stdout.close()
-        
-      CondorIDs, Err = cid3.communicate()
-   
-      f.write("CONDOR_IDS = "+str(CondorIDs)+'\n')
-
-      for count in range(1,len(CPUs.splitlines())+1):
-        f.write("SLOT"+str(count)+"_USER = user"+str(count)+'\n')
-        os.system("/usr/sbin/useradd -m -s /sbin/nologin  user"+str(count)+" > /dev/null 2>&1\n")
-
-    Start = 'False'           
-    DaemonList = 'COLLECTOR, MASTER, NEGOTIATOR, SCHEDD'        
-    if 'master' in condor_cc_cfg:
-      condor_cfg = condor_cc_cfg['master']
-
-      f.write("CONDOR_HOST = "+str(Hostname)+'\n')
-
-      f.write("COLLECTOR_NAME = Personal Condor at "+Hostname+'\n')
-
-      if 'collector-host-port' in condor_cfg:
-        CollectorHostPORT = condor_cfg['collector-host-port']
-      f.write("COLLECTOR_HOST = "+str(Hostname)+':'+str(CollectorHostPORT)+'\n')
-            
-      if 'highport' in condor_cfg:
-        Highport = condor_cfg['highport']
-      f.write("HIGHPORT = "+str(Highport)+'\n')
-
-      if 'lowport' in condor_cfg:
-        Lowport = condor_cfg['lowport']
-      f.write("LOWPORT = "+str(Lowport)+'\n')
-
-      if 'start' in condor_cfg:
-        Start = condor_cfg['start']
-      f.write("START = "+str(Start)+'\n')
-
-      if 'suspend' in condor_cfg:
-        Suspend = condor_cfg['suspend']
-      f.write("SUSPEND = "+str(Suspend)+'\n')
-
-      if 'preempt' in condor_cfg:
-        Preempt = condor_cfg['preempt']
-      f.write("PREEMPT = "+str(Preempt)+'\n')
-
-      if 'kill' in condor_cfg:
-        Kill = condor_cfg['kill']
-      f.write("KILL = "+str(Kill)+'\n')
-
-      if 'hostallow-write' in condor_cfg:
-        HostAllowWrite = condor_cfg['hostallow-write']
-      f.write("HOSTALLOW_WRITE = "+str(HostAllowWrite)+'\n')
-
-      if 'hostallow-read' in condor_cfg:
-        HostAllowRead = condor_cfg['hostallow-read']
-      f.write("HOSTALLOW_READ = "+str(HostAllowRead)+'\n')
-
-      if 'daemon-list' in condor_cfg:
-        DaemonList = condor_cfg['daemon-list']
-      f.write("DAEMON_LIST = "+DaemonList+'\n')
-
-      cid1 = subprocess.Popen([CAT_cmd, "/etc/passwd"], stdout=subprocess.PIPE)
-      cid2 = subprocess.Popen([GREP_cmd, "condor:"],stdin=cid1.stdout, stdout=subprocess.PIPE)
-      cid3 = subprocess.Popen([AWK_cmd, "-F:",'{print $3"."$4}'], stdin=cid2.stdout, stdout=subprocess.PIPE)
-      cid1.stdout.close()
-      cid2.stdout.close()
-
-      CondorIDs, Err = cid3.communicate()
-
-      f.write("CONDOR_IDS = "+str(CondorIDs)+'\n')
-
-      f.write("SEC_DAEMON_AUTHENTICATION = OPTIONAL\n")
-      f.write("SEC_DEFAULT_AUTHENTICATION = OPTIONAL\n")
-
-    f.close()
-    subprocess.check_call(['/etc/init.d/iptables', 'stop'])		# The iptables should be configured instead of being stopped 
-
+    # Add discoverable values
+    ip_addr = socket.gethostbyname(socket.getfqdn())
+    template['FILESYSTEM_DOMAIN'] = ip_addr	
+    template['HOSTALLOW_DAEMON'] +=  ", %s" % (ip_addr)
+    template['ALLOW_DAEMON'] += ", %s,  127.0.0.1" % (ip_addr)
 	
-    # Moving our config file to the right directory (erase the old config)        
-    subprocess.call([RM_cmd,'-f','/etc/condor/condor_config.local'])	# Just in case
-    subprocess.check_call([CP_cmd,ConfigFile,'/etc/condor/'])
-    subprocess.call([RM_cmd,'-f',ConfigFile])
-      
-    if Installation:
-      subprocess.call(["/bin/ln -s /etc/condor/condor_config.local /etc/condor/config.d/condor_config.local"], shell=True)
+    # Add dynamically discovered SLOT users
+    condor_uid = pwd.getpwnam('condor').pw_uid
+    condor_gid = pwd.getpwnam('condor').pw_gid
+    template['CONDOR_ID'] = "%s.%s" % (condor_uid, condor_gid)
+    if 'SLOT_USER' in  condor_cc_cfg and str(condor_cc_cfg['SLOT_USER']) == 'True':
+        for count in range(1, multiprocessing.cpu_count() + 1):
+            template["SLOT%s_USER" % (count)] = "cuser%s" % (count)
+            os.system("/usr/sbin/useradd -m -s /sbin/nologin  cuser%s > /dev/null 2>&1\n" % (count))
+    else:
+        os.system("/usr/sbin/useradd -m -s /sbin/nologin  cuser1 > /dev/null 2>&1\n")
+    # Create configuration file
+    condor_config_file = '/etc/condor/condor_config.local'
+    #condor_config_file = 'condor_config.local'
+    file_handle = open(condor_config_file,'w') 
+    for parameter in template:
+        file_handle.write("%s = %s\n" %(parameter, template[parameter]))
+    file_handle.close()
+	
+    # Restart  condor
+    subprocess.check_call(['/sbin/service', 'condor', 'restart'])
 
-    # Starting condor
-    subprocess.check_call([SERVICE_cmd,'condor','start'])
+if __name__ == "__main__":
+	
+    config = {
+        'condor' : {		},
+    }
+    
+    handle(None, config, None, None, None)
+	
 
-    # END
