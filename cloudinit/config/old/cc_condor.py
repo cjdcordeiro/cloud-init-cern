@@ -107,7 +107,7 @@ def handle(_name, cfg, cloud, log, _args):
                 pp = open('/root/pool_password','w')
             except:
                 raise
-            pp.write(condor_cfg['pool-password']) 
+            pp.write(condor_cc_cfg['pool-password']) 
             pp.close()
         else:
             template[parameter] = condor_cc_cfg[parameter]        
