@@ -86,7 +86,7 @@ def handle(_name, cfg, cloud, log, _args):
 
     IPAddress = socket.gethostbyname(socket.gethostname())
     
-    slot_dynamic = False
+    slot_dynamic = True
     # Read userdata configuration
     # Allow any parameter on the userdata - user's responsability
     for parameter in condor_cc_cfg:
@@ -104,12 +104,12 @@ def handle(_name, cfg, cloud, log, _args):
                     raise
                 pp.write(condor_cc_cfg['pool-password']) 
                 pp.close()
-            elif ('install' in condor_cc_cfg) and (condor_cc_cfg['install'] == True):
+            elif (parameter == 'install') and (condor_cc_cfg[parameter] == True):
                 install_condor() 
             else:
                 template[parameter] = condor_cc_cfg[parameter]        
                 if re.match('SLOT[\d]_USER', parameter):
-                    slot_dynamic = True
+                    slot_dynamic = False
             
     # Dynamically writing SLOT users
     condor_uid = pwd.getpwnam('condor').pw_uid

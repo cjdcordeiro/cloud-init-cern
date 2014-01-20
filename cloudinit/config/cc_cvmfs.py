@@ -47,7 +47,7 @@ def install_cvmfs():
     cvmfs_rpm_url = 'http://cvmrepo.web.cern.ch/cvmrepo/yum/cvmfs/EL/'+ReleaseMajor+'/'+arch+'/cvmfs-release-2-3.el'+ReleaseMajor+'.noarch.rpm'
     # Downloading cvmfs .rpm file to /home path
     urllib.urlretrieve(cvmfs_rpm_url, '/home/cvmfs.rpm')
-    if subprocess.check_call([RPM_cmd, "-Uvh", "/home/cvmfs.rpm"]): # If it returns 0 then it is fine
+    if subprocess.call([RPM_cmd, "-Uvh", "/home/cvmfs.rpm"]): # If it returns 0 then it is fine
         os.system("rpm -Uvh http://cvmrepo.web.cern.ch/cvmrepo/yum/cvmfs/EL/6/`uname -i`/cvmfs-release-2-4.el6.noarch.rpm")    # Manual installation
 
     # Install cvmfs packages
@@ -63,6 +63,8 @@ def install_cvmfs():
     os.system("export PATH=${PATH}:/usr/bin:/sbin; cvmfs_config setup")
 
     # Start autofs and make it starting automatically after reboot 
+    # Uncomment the following in case cvmfs installation doesn't do it on its own
+    '''
     with open('/etc/auto.master', 'r+') as automaster_file:
         autofs_lines = automaster_file.readlines()
         autofs_lines.append('/cvmfs /etc/auto.cvmfs\n+auto.master\n')
@@ -75,7 +77,7 @@ def install_cvmfs():
         fusefile.seek(0)
         fusefile.writelines(fuse_lines)
         fusefile.close()    
-    
+    '''
     subprocess.check_call([SERVICE_cmd,'autofs','restart'])
     subprocess.check_call([CHK_cmd,'autofs','on'])
     os.system("export PATH=${PATH}:/usr/bin:/sbin; cvmfs_config chksetup")
@@ -93,8 +95,8 @@ def install_cvmfs():
 def config_cvmfs(lfile, dfile, cmsfile, params):
     quota_aux_var = 1   # Aux varibale to check whether to write default quota-limit value or not   
   
-    if 'install' in cvmfs_cfg:
-        if cvmfs_cfg['install'] == True:
+    if 'install' in params:
+        if params['install'] == True:
             install_cvmfs()
 
     if 'local' in params:
@@ -107,7 +109,7 @@ def config_cvmfs(lfile, dfile, cmsfile, params):
 
     if 'CMS_LOCAL_SITE' in params:
         cmslocal = open(cmsfile, 'w')
-        cmslocal.write('export CMS_LOCAL_SITE='+str(value)+'\n')
+        cmslocal.write('export CMS_LOCAL_SITE='+str(params['CMS_LOCAL_SITE'])+'\n')
         cmslocal.close()
 
     flocal = open(lfile, 'w')
