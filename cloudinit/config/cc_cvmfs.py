@@ -105,7 +105,7 @@ def config_cvmfs(lfile, dfile, cmsfile, params):
             else:
                 template[parameter] = local_args[parameter]
 
-    if 'cms-local-site' in params:
+    if 'CMS_LOCAL_SITE' in params:
         cmslocal = open(cmsfile, 'w')
         cmslocal.write('export CMS_LOCAL_SITE='+str(value)+'\n')
         cmslocal.close()
