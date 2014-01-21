@@ -67,15 +67,17 @@ def conf_node(node_f, params, lines):
                     if param in lines[i]:
                         lines[i] = "  %s = %s\n" % (param,str(value))
                         break
-
+    
+    aux_send_channel = 0	# Help finding the right block. 
     # Find index offset in lines for faster search
     for i in range(0,len(lines)):
         if 'cluster {' in lines[i]:
             cluster_offset = i
         if 'udp_recv_channel {' in lines[i]:
             offset_recv = i
-        if 'udp_send_channel {' in lines[i]:
+        if ('mcast_join' in lines[i]) and (aux_send_channel == 0):	# First mcast_joint belongs to udp_send_channel
             offset_send = i
+            aux_send_channel = 1
         if 'tcp_accept_channel {' in lines[i]:
             offset_tcp = i
             break	# Final configurable block
@@ -144,9 +146,6 @@ def handle(_name, cfg, cloud, log, _args):
     node_lines = flocal.readlines()
     flocal.close()
         
-    conf_node(gmond_conf_file, ganglia_param_cfg, node_lines)
+    conf_node(gmond_conf_file, ganglia_cfg, node_lines)
         
-    # Stop iptables to solve connectivity issues. Configuring iptables would be a better solution
-    subprocess.check_call([SERVICE_cmd,'iptables','stop'])
-    os.system('/usr/sbin/setsebool httpd_can_network_connect 1; /etc/init.d/gmond restart ; /sbin/chkconfig gmond on')
-
+    os.system('/etc/init.d/gmond restart ; /sbin/chkconfig gmond on')

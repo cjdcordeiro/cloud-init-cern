@@ -36,6 +36,10 @@ CHK_cmd = '/sbin/chkconfig'
 CHOWN_cmd = '/bin/chown'
 
 def install_cvmfs():
+    if subprocess.call(['/usr/bin/cvmfs2','-V']) == 0:
+        print 'CVMFS is already installed'
+        return
+
     # Let's retrieve the current cvmfs release
     ReleaseAux = subprocess.Popen([RPM_cmd, "-q", "--queryformat", "%{version}", "sl-release"], stdout=subprocess.PIPE)
     Release, ReleaseErr = ReleaseAux.communicate()
@@ -80,7 +84,6 @@ def install_cvmfs():
     '''
     subprocess.check_call([SERVICE_cmd,'autofs','restart'])
     subprocess.check_call([CHK_cmd,'autofs','on'])
-    os.system("export PATH=${PATH}:/usr/bin:/sbin; cvmfs_config chksetup")
 
     os.system('sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; echo 0 > /selinux/enforce')
 
@@ -93,7 +96,6 @@ def install_cvmfs():
 
 
 def config_cvmfs(lfile, dfile, cmsfile, params):
-    quota_aux_var = 1   # Aux varibale to check whether to write default quota-limit value or not   
   
     if 'install' in params:
         if params['install'] == True:
