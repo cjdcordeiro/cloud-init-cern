@@ -1,6 +1,6 @@
 Name: cern-cloudinit-latest
-Version: 1
-Release: 1.0.1
+Version: 2
+Release: 2.0
 Summary: CERN services (cvmfs, ganglia and condor) modules for CloudInit	
 Requires: cloud-init 
 Conflicts: cloud-init < 0.7.1
