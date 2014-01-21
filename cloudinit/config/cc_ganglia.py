@@ -91,13 +91,13 @@ def conf_node(node_f, params, lines):
 
     lines = [word.replace('mcast_join','host') for word in lines]               # Change to 'host' instead of 'mcast_join'. If it isn't passed in cloud-config, it will be changed anyway.
 
-    for u in range(offset_recv, offset_aux+10):    # Erase the 'host' parameter in udp_recv_channel, because it causes parsing errors
+    for u in range(offset_recv, offset_recv+10):    # Erase the 'host' parameter in udp_recv_channel, because it causes parsing errors
         if 'host' in lines[u]:
             lines[u] = ''
             break
 
-    if 'udpSendChannel' in params:
-        udp_send_cfg = params['udpSendChannel']
+    if 'udp_send_channel' in params:
+        udp_send_cfg = params['udp_send_channel']
         for param, value in udp_send_cfg.iteritems():
             if param in udpsend_template:
                 for a in range(offset_send, len(lines)):
@@ -105,8 +105,8 @@ def conf_node(node_f, params, lines):
                         lines[a] = "  %s = %s\n" % (param,str(value))
                         break
 
-    if 'udpRecvChannel' in params:
-        udp_recv_cfg = params['udpRecvChannel']
+    if 'udp_recv_channel' in params:
+        udp_recv_cfg = params['udp_recv_channel']
         for param, value in udp_recv_cfg.iteritems():
             if param in udprecv_template:
                 for u in range(offset_recv, len(lines)):
@@ -114,8 +114,8 @@ def conf_node(node_f, params, lines):
                         lines[u] = "  %s = %s\n" % (param,str(value))
                         break
   
-    if 'tcpAcceptChannel' in params:
-        tcp_cfg = params['tcpAcceptChannel']
+    if 'tcp_accept_channel' in params:
+        tcp_cfg = params['tcp_accept_channel']
         for param, value in tcp_cfg.iteritems():
             if param == 'port':
                 for t in range(offset_tcp, len(lines)):    # tcp_accept_channel is generally small. Five iterations just in case.
