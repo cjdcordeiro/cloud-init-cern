@@ -36,9 +36,12 @@ CHK_cmd = '/sbin/chkconfig'
 CHOWN_cmd = '/bin/chown'
 
 def install_cvmfs():
-    if subprocess.call(['/usr/bin/cvmfs2','-V']) == 0:
+    try:
+        subprocess.call(['/usr/bin/cvmfs2','-V'])
         print 'CVMFS is already installed'
         return
+    except:
+        print 'Installing CVMFS...'
 
     # Let's retrieve the current cvmfs release
     ReleaseAux = subprocess.Popen([RPM_cmd, "-q", "--queryformat", "%{version}", "sl-release"], stdout=subprocess.PIPE)
