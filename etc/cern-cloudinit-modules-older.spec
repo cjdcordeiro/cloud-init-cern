@@ -1,6 +1,6 @@
 Name: cern-cloudinit-older
 Version: 2
-Release: 2.0
+Release: 2.1
 Summary: CERN services (cvmfs, ganglia and condor) modules for CloudInit	
 Requires: cloud-init 
 Conflicts: cloud-init >= 0.7.1
