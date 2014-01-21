@@ -214,4 +214,3 @@ git push -f
 
 echo "Finished. Bye!"
 
-exit 0
