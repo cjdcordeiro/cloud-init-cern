@@ -109,6 +109,7 @@ def handle(_name, cfg, cloud, log, _args):
             else:
                 template[parameter] = condor_cc_cfg[parameter]        
                 if re.match('SLOT[\d]_USER', parameter):
+                    os.system("/usr/sbin/useradd -m -s /sbin/nologin  %s > /dev/null 2>&1\n" % (condor_cc_cfg[parameter]))
                     slot_dynamic = False
             
     # Dynamically writing SLOT users
