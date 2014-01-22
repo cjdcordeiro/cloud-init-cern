@@ -1,7 +1,4 @@
-2.1 in Tue Jan 21 16:03:29 CET 2014
-  - 2.4
-  - 2.3
-  - 2.2
+2.2 in Wed Jan 22 12:24:08 CET 2014
+  - New tarball
+  - Typo in cvmfs module and buildrelease
   - Adding RPM built from buildrelease script, on tag 2.1
-  - 2.1
-  - Adding RPM built from buildrelease script, on tag 2.0
