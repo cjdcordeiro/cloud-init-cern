@@ -1,4 +1,8 @@
-2.2 in Wed Jan 22 12:24:08 CET 2014
+2.2 in Wed Jan 22 15:17:41 CET 2014
+  - new tar
+  - Little fix in condor
+  - Adding RPM built from buildrelease script, on tag 2.2
+  - 2.2
   - New tarball
   - Typo in cvmfs module and buildrelease
   - Adding RPM built from buildrelease script, on tag 2.1
