@@ -84,15 +84,18 @@ def handle(_name, cfg, cloud, log, _args):
     # Condor configuration file
     ConfigFile = '/etc/condor/condor_config.local'
 
-    IPAddress = socket.gethostbyname(socket.gethostname())
-    
+    try:
+        IPAddress = socket.gethostbyname(socket.gethostname())
+    except: 		# Sometimes the IP is resolved when this runs, so...
+        IPAddress = '$(IP_ADDRESS)'
+
     slot_dynamic = True
     # Read userdata configuration
     # Allow any parameter on the userdata - user's responsability
     for parameter in condor_cc_cfg:
         # IP_ADDRESS is a key for a dynamic configuration of the IP address
-        if 'IP_ADDRESS' in str(condor_cc_cfg[parameter]):
-            template[parameter] = re.sub('IP_ADDRESS',IPAddress,str(condor_cc_cfg[parameter]))
+        if 'IPADDRESS' in str(condor_cc_cfg[parameter]):
+            template[parameter] = re.sub('IPADDRESS',IPAddress,str(condor_cc_cfg[parameter]))
         else:
             # pool-password is not a configuration
             if parameter == 'pool-password':
