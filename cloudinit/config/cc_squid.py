@@ -35,15 +35,13 @@ template = [
 
 def install(params):
     os.system('rpm -Uvh http://frontier.cern.ch/dist/rpms/RPMS/noarch/frontier-release-1.0-1.noarch.rpm')
-    cc.install_packages(("frontier-squid",))
-    os.system('chkconfig frontier-squid on; iptables -I INPUT 3 --proto udp --dport 3401 -j ACCEPT; restorecon -R /var/cache')
-
+    os.system('yum -y install frontier-squid; chkconfig frontier-squid on; iptables -I INPUT 3 --proto udp --dport 3401 -j ACCEPT; restorecon -R /var/cache')
 
 def handle(_name, cfg, cloud, log, _args):
     if 'squid' not in cfg:
         return
  
-    params = cfg['squid']:
+    params = cfg['squid']
     if ('install' in params) and (params['install'] == True):
         install(params)
     else:
@@ -54,6 +52,7 @@ def handle(_name, cfg, cloud, log, _args):
         os.system('service frontier-squid start')
         print 'Downloaded customization file. Ending squid configuration.'
         return
+    print '0'
     if 'customize' in params:
         try:
             file = open('/etc/squid/customize.sh','r+')
@@ -66,30 +65,38 @@ def handle(_name, cfg, cloud, log, _args):
         cfg_params = params['customize']
         for option in cfg_params:
             if option == template[0]:
-                lines = [re.sub('setoption("acl NET_LOCAL src.*','setoption("acl NET_LOCAL src", "%s")' % cfg_params[option], word) for word in lines] 
+                lines = [re.sub('.*"acl NET_LOCAL src".*','setoption("acl NET_LOCAL src", "%s")' % cfg_params[option], word) for word in lines] 
             elif option == template[1]:
-                lines = [re.sub('setoption("cache_mem.*','setoption("cache_mem", "%s MB")' % str(cfg_params[option]), word) for word in lines]
+                lines = [re.sub('.*"cache_mem".*','setoption("cache_mem", "%s MB")' % str(cfg_params[option]), word) for word in lines]
             elif option == template[2]:
-                lines = [re.sub('setoptionparameter("cache_dir", 3,.*','setoptionparameter("cache_dir", 3, "%s")' % str(cfg_params[option]), word) for word in lines]
+                lines
+                lines = [re.sub('.*"cache_dir", 3,.*','setoptionparameter("cache_dir", 3, "%s")' % str(cfg_params[option]), word) for word in lines]
+                lines
             elif option == template[3]:
-                lines.append('setoption("cache_log", "%s")' % cfg_params[option])
+                lines.append('setoption("cache_log", "%s")\n' % cfg_params[option])
             elif option == template[4]:
-                lines.append('setoption("coredump_dir", "%s")' % cfg_params[option])
+                lines.append('setoption("coredump_dir", "%s")\n' % cfg_params[option])
             elif option == template[5]:
-                lines.append('setoptionparameter("cache_dir", 2, "%s")' % cfg_params[option])
+                lines.append('setoptionparameter("cache_dir", 2, "%s")\n' % cfg_params[option])
             elif option == template[6]:
                 if str(cfg_params[option]) != 'none':
-                    lines.append('setoptionparameter("access_log", 1, "%s")' % cfg_params[option])
+                    lines.append('setoptionparameter("access_log", 1, "%s")\n' % cfg_params[option])
                 else:
-                    lines.append('setoption("access_log", "none")')
+                    lines.append('setoption("access_log", "none")\n')
             elif option == template[7]:
-                lines.append('setoption("logfile_rotate", "%s")' % str(cfg_params[option]))
+                lines.append('setoption("logfile_rotate", "%s"\n)' % str(cfg_params[option]))
             elif option == template[8]:
-                lines.append('setoption("http_port","%s")' % str(cfg_params[option]))
+                print 'port'
+                lines.append('setoption("http_port","%s")\n' % str(cfg_params[option]))
             elif option == template[9]:
                 os.system('export http_proxy=%s' % cfg_params[option])
             else:
                 print 'Invalid option %s' % cfg_params[option]
-                
+        lines.append("""print\n}'\n""")
+        file.seek(0)
+        file.writelines(lines)        
+        file.truncate()
+        file.close()
+    
     os.system('service frontier-squid start')
     # END---
