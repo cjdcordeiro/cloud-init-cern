@@ -28,8 +28,7 @@ template = [
 	'cache_dir',		# cache_dir location
 	'access_log', 		# access_log - either directory or 'none'
 	'logfile_rotate',	# logfile_rotate
-	'http_port',		# privileged port
-	'http_proxy'		# export http_proxy
+	'http_port'		# privileged port
 ]
 
 
@@ -52,7 +51,6 @@ def handle(_name, cfg, cloud, log, _args):
         os.system('service frontier-squid start')
         print 'Downloaded customization file. Ending squid configuration.'
         return
-    print '0'
     if 'customize' in params:
         try:
             file = open('/etc/squid/customize.sh','r+')
@@ -69,9 +67,7 @@ def handle(_name, cfg, cloud, log, _args):
             elif option == template[1]:
                 lines = [re.sub('.*"cache_mem".*','setoption("cache_mem", "%s MB")' % str(cfg_params[option]), word) for word in lines]
             elif option == template[2]:
-                lines
                 lines = [re.sub('.*"cache_dir", 3,.*','setoptionparameter("cache_dir", 3, "%s")' % str(cfg_params[option]), word) for word in lines]
-                lines
             elif option == template[3]:
                 lines.append('setoption("cache_log", "%s")\n' % cfg_params[option])
             elif option == template[4]:
@@ -86,12 +82,10 @@ def handle(_name, cfg, cloud, log, _args):
             elif option == template[7]:
                 lines.append('setoption("logfile_rotate", "%s"\n)' % str(cfg_params[option]))
             elif option == template[8]:
-                print 'port'
                 lines.append('setoption("http_port","%s")\n' % str(cfg_params[option]))
-            elif option == template[9]:
-                os.system('export http_proxy=%s' % cfg_params[option])
             else:
                 print 'Invalid option %s' % cfg_params[option]
+
         lines.append("""print\n}'\n""")
         file.seek(0)
         file.writelines(lines)        
