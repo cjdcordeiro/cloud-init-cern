@@ -37,10 +37,10 @@ def install(params):
     os.system('yum -y install frontier-squid; chkconfig frontier-squid on; iptables -I INPUT 3 --proto udp --dport 3401 -j ACCEPT; restorecon -R /var/cache')
 
 def handle(_name, cfg, cloud, log, _args):
-    if 'squid' not in cfg:
+    if 'frontier_squid' not in cfg:
         return
  
-    params = cfg['squid']
+    params = cfg['frontier_squid']
     if ('install' in params) and (params['install'] == True):
         install(params)
     else:
