@@ -42,7 +42,6 @@ template = {
 	'ALLOW_WRITE' : 'condor@*.*',
 	'STARTER_ALLOW_RUNAS_OWNER' : 'False',
 	'ALLOW_DAEMON' : '*',
-	'JAVA' : '/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/jre/bin/java',
 	'RELEASE_DIR' : '/usr', 
 	'LOCAL_DIR' : '/var', 
 	'RANK' : '0'
