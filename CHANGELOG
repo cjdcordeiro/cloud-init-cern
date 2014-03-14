@@ -1,3 +1,9 @@
-2.3 in Tue Feb 4 11:26:32 CET 2014
-  - adding ip_address security in condor module
-  - Adding RPM built from buildrelease script, on tag 2.2
+2.4 in Fri Mar 14 15:49:01 CET 2014
+  - new tarball
+  - cc_condor java parameter out
+  - new frontier squid module updated
+  - new frontier squid module
+  - new squid module - test
+  - new squid module - test
+  - new squid module - test
+  - Adding RPM built from buildrelease script, on tag 2.3
