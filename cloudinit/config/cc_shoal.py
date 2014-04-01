@@ -1,7 +1,7 @@
 #################################################################################
 # Author: Cristovao Cordeiro <cristovao.cordeiro@cern.ch>			#
 #										#
-# Cloud Config module for CVMFS service.					#
+# Cloud Config module for Shoal service.					#
 # Documentation in:								#
 # https://twiki.cern.ch/twiki/bin/view/LCG/CloudInit				#
 #################################################################################
