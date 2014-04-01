@@ -43,8 +43,10 @@ def handle(_name, cfg, cloud, log, _args):
             template[param] = shoal_cfg[param]
 
     l = open(LocalFile,'w')
+    l.write('[general]\n\n')
     for item in template:
         l.write("%s = %s\n" %(item, template[item]))  
+    l.close()
 
     os.system('/usr/bin/shoal-client')
     ################
