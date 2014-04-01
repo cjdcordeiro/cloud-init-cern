@@ -38,7 +38,7 @@ def handle(_name, cfg, cloud, log, _args):
             c = open(CronFile,'w')
             c.write(shoal_cfg[param])
             c.close()
-            os.system('crontab %s' %s CronFile)
+            os.system('crontab %s' % CronFile)
         else:
             template[param] = shoal_cfg[param]
 
