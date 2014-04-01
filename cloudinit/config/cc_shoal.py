@@ -49,4 +49,3 @@ def handle(_name, cfg, cloud, log, _args):
     l.close()
 
     os.system('/usr/bin/shoal-client')
-    ################
