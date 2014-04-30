@@ -1,9 +1,8 @@
-2.4 in Fri Mar 14 15:49:01 CET 2014
-  - new tarball
-  - cc_condor java parameter out
-  - new frontier squid module updated
-  - new frontier squid module
-  - new squid module - test
-  - new squid module - test
-  - new squid module - test
-  - Adding RPM built from buildrelease script, on tag 2.3
+2.5 in Wed Apr 30 09:59:17 CEST 2014
+  - Adding ATLAS auto config from JSON to Ganglia
+  - New module for shoal config - tested
+  - New module for shoal config
+  - New module for shoal config
+  - New module for shoal config
+  - New module for shoal config
+  - Adding RPM built from buildrelease script, on tag 2.4
