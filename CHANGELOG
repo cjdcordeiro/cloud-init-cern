@@ -1,8 +1,3 @@
-2.5 in Wed Apr 30 09:59:17 CEST 2014
-  - Adding ATLAS auto config from JSON to Ganglia
-  - New module for shoal config - tested
-  - New module for shoal config
-  - New module for shoal config
-  - New module for shoal config
-  - New module for shoal config
-  - Adding RPM built from buildrelease script, on tag 2.4
+2.6 in Tue Dec 9 11:29:38 CET 2014
+  - adding override_hostname and override_ip
+  - Adding RPM built from buildrelease script, on tag 2.5
