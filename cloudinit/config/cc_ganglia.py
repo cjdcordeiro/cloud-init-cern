@@ -37,7 +37,9 @@ globals_template = [
 	'host_dmax',	# in seconds
 	'cleanup_threshold',	# in seconds
 	'gexec',
-	'send_metadata_interval'	# in seconds
+	'send_metadata_interval',	# in seconds
+        'override_hostname',
+        'override_ip'
 ]
 
 cluster_template = [
