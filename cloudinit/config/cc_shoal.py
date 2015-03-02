@@ -22,7 +22,7 @@ import os
 template = {
 	'cvmfs_config': '/etc/cvmfs/default.local',
 	'shoal_server_url': 'http://localhost:8080/nearest',
-	'default_squid_proxy': 'http://chrysaor.westgrid.ca:3128;http://cernvm-webfs.atlas-canada.ca:3128;DIRECT'
+	'default_squid_proxy': 'DIRECT'
 }
 
 def handle(_name, cfg, cloud, log, _args):
@@ -31,14 +31,13 @@ def handle(_name, cfg, cloud, log, _args):
 
     shoal_cfg = cfg['shoal']
     LocalFile = '/etc/shoal/shoal_client.conf'
-    CronFile = '/etc/crontab_shoal'
+    CronFile = '/etc/cron.d/shoal-client'
 
     for param in shoal_cfg:
         if param == 'cron_shoal':
             c = open(CronFile,'w')
-            c.write(shoal_cfg[param])
+            c.write(shoal_cfg[param]+'\n')
             c.close()
-            os.system('crontab %s' % CronFile)
         else:
             template[param] = shoal_cfg[param]
 
