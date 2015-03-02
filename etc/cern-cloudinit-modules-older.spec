@@ -1,7 +1,7 @@
 Name: cern-cloudinit-older
 Version: 2
 Release: 2.7
-Summary: CERN services (cvmfs, ganglia and condor) modules for CloudInit	
+Summary: CERN services (shoal, cvmfs, ganglia and condor) modules for CloudInit	
 Requires: cloud-init 
 Conflicts: cloud-init >= 0.7.1
 Group: Plugins/Contextualization
@@ -11,7 +11,7 @@ BuildArch: noarch
 Source: https://github.com/cjdcordeiro/cloud-init-cern/raw/master/cloudinit/config/cloudinit-modules.tar.gz
 Packager: CERN IT-SDC-OL
 %description
-This RPM copies the cloud config modules of cvmfs, Ganglia and Condor to its respective directory and prepares CloudInit to process those new modules. 
+This RPM copies the cloud config modules of shoal, cvmfs, Ganglia and Condor to its respective directory and prepares CloudInit to process those new modules. 
 
 %package cvmfs
 Summary: CVMFS module for CloudInit
@@ -31,6 +31,12 @@ Conflicts: cloud-init >= 0.7.1
 %description ganglia
 This will only install the Ganglia module instead of installing all existing ones.
 
+%package shoal
+Summary: Shoal module for CloudInit
+Conflicts: cloud-init >= 0.7.1
+%description shoal
+This will only install the shoal module instead of installing all existing ones.
+
 %prep
 %setup -c
 
@@ -45,7 +51,7 @@ mv cc*.py %{buildroot}%{python_sitelib}/cloudinit/CloudConfig/
 %pre
 echo "Adding new modules to CloudInit..."
 old="cloud_config_modules:"
-newline="cloud_config_modules:\n - condor\n - cvmfs\n - ganglia"
+newline="cloud_config_modules:\n - condor\n - cvmfs\n - ganglia\n - shoal"
 sed -i.bak "s/${old}/${newline}/g" /etc/cloud/cloud.cfg
 
 %pre cvmfs
@@ -66,6 +72,12 @@ old="cloud_config_modules:"
 newline="cloud_config_modules:\n - ganglia"
 sed -i.bak "s/${old}/${newline}/g" /etc/cloud/cloud.cfg
 
+%pre shoal
+echo "Adding Shoal module to CloudInit..."
+old="cloud_config_modules:"
+newline="cloud_config_modules:\n - shoal"
+sed -i.bak "s/${old}/${newline}/g" /etc/cloud/cloud.cfg
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -75,6 +87,7 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/cloudinit/CloudConfig/cc_condor.py
 %{python_sitelib}/cloudinit/CloudConfig/cc_cvmfs.py
 %{python_sitelib}/cloudinit/CloudConfig/cc_ganglia.py
+%{python_sitelib}/cloudinit/CloudConfig/cc_shoal.py
 
 
 %files cvmfs
@@ -93,6 +106,11 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %config(noreplace)
 %{python_sitelib}/cloudinit/CloudConfig/cc_ganglia.py
+
+%files shoal
+%defattr(-,root,root,-)
+%config(noreplace)
+%{python_sitelib}/cloudinit/CloudConfig/cc_shoal.py
 
 %changelog
 * Mon Sep 9 2013 Cristóvão Cordeiro <cristovao.cordeiro@cern.ch> 
