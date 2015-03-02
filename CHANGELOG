@@ -1,2 +1,5 @@
-2.7 in Tue Dec 9 12:16:14 CET 2014
-  - Adding RPM built from buildrelease script, on tag 2.6
+2.8 in Mon Mar 2 18:08:40 CET 2015
+  - add shoal to RPM
+  - 2.8
+  - updated shoal module. different cronfile with extra \n. Changed default values
+  - Adding RPM built from buildrelease script, on tag 2.7
