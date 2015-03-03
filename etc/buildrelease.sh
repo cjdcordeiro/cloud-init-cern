@@ -154,6 +154,8 @@ sed -i "s/${OLD_VERSION}.*/${NEW_VERSION}/g" $SPEC_DIR_OLD
 
 # TODO : Allow RPM signing
 cd $CURRENT_DIR
+
+cp -f $GIT_DIR/cloudinit/config/cloudinit-modules.tar.gz ~/rpmbuild/SOURCES
 rpmbuild -bb $SPEC_DIR_LATEST --define "_rpmdir ."
 AUX_EXIT_CODE=$?
 rpmbuild -bb $SPEC_DIR_OLD --define "_rpmdir ." --define "_binary_filedigest_algorithm 1"  --define "_binary_payload 1"
@@ -214,4 +216,3 @@ git push -f
 
 echo "Finished. Bye!"
 
-exit 0
