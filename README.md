@@ -65,5 +65,7 @@ You can configure several parameters for each one of the services. Here are two 
 Always remember to write "#cloud-config" in the first line of your user-data file, and to respect white-spacing.
 
 
+ *More features are enabled. Please look at the Twiki page above*
+
 Cristóvão Cordeiro, 26/04/2013, cristovao.cordeiro@cern.ch
 
