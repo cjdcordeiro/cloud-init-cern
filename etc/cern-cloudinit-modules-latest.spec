@@ -84,33 +84,33 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/config/cc_condor.py
-%{python_sitelib}/cloudinit/config/cc_cvmfs.py
-%{python_sitelib}/cloudinit/config/cc_ganglia.py
-%{python_sitelib}/cloudinit/config/cc_shoal.py
+%{python_sitelib}/cloudinit/config/cc_condor.py*
+%{python_sitelib}/cloudinit/config/cc_cvmfs.py*
+%{python_sitelib}/cloudinit/config/cc_ganglia.py*
+%{python_sitelib}/cloudinit/config/cc_shoal.py*
 
 
 %files cvmfs
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/config/cc_cvmfs.py
+%{python_sitelib}/cloudinit/config/cc_cvmfs.py*
 
 
 %files condor
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/config/cc_condor.py
+%{python_sitelib}/cloudinit/config/cc_condor.py*
 
 
 %files ganglia
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/config/cc_ganglia.py
+%{python_sitelib}/cloudinit/config/cc_ganglia.py*
 
 %files shoal
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/config/cc_shoal.py
+%{python_sitelib}/cloudinit/config/cc_shoal.py*
 
 
 %changelog
