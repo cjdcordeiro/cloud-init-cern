@@ -158,7 +158,7 @@ cd $CURRENT_DIR
 cp -f $GIT_DIR/cloudinit/config/cloudinit-modules.tar.gz ~/rpmbuild/SOURCES
 rpmbuild -bb $SPEC_DIR_LATEST --define "_rpmdir ."
 AUX_EXIT_CODE=$?
-#rpmbuild -bb $SPEC_DIR_OLD --define "_rpmdir ." --define "_binary_filedigest_algorithm 1"  --define "_binary_payload 1"
+rpmbuild -bb $SPEC_DIR_OLD --define "_rpmdir ." --define "_binary_filedigest_algorithm 1"  --define "_binary_payload 1"
 if [ $? -ne 0 ] || [ $AUX_EXIT_CODE -ne 0 ]; then
 	error=$?
         sed -i "s/$NEW_LINE/$OLD_LINE$CURRENT_REL/g" $SPEC_DIR_LATEST
