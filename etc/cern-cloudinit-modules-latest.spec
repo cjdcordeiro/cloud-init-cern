@@ -1,6 +1,6 @@
 Name: cern-cloudinit-latest
 Version: 3
-Release: 3.0.2
+Release: 3.1
 Summary: CERN services (cvmfs, ganglia, shoal and condor) modules for CloudInit	
 Requires: cloud-init 
 Conflicts: cloud-init < 0.7.1
@@ -84,10 +84,10 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/config/cc_condor.py
-%{python_sitelib}/cloudinit/config/cc_cvmfs.py
-%{python_sitelib}/cloudinit/config/cc_ganglia.py
-%{python_sitelib}/cloudinit/config/cc_shoal.py
+%{python_sitelib}/cloudinit/config/cc_condor.py*
+%{python_sitelib}/cloudinit/config/cc_cvmfs.py*
+%{python_sitelib}/cloudinit/config/cc_ganglia.py*
+%{python_sitelib}/cloudinit/config/cc_shoal.py*
 
 
 %files cvmfs
