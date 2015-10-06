@@ -1,5 +1,5 @@
 Name: cern-cloudinit-older
-Version: 2
+Version: 3
 Release: 2.8
 Summary: CERN services (shoal, cvmfs, ganglia and condor) modules for CloudInit	
 Requires: cloud-init 
