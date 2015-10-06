@@ -1,2 +1,2 @@
-3.2 in Tue Oct 6 15:48:52 CEST 2015
-  - Adding RPM built from buildrelease script, on tag 3.0.5
+4.0.0 in Tue Oct 6 15:59:01 CEST 2015
+  - stop rpm for old ci
