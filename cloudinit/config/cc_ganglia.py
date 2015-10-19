@@ -39,6 +39,7 @@ globals_template = [
 	'gexec',
 	'send_metadata_interval',	# in seconds
         'override_hostname',
+        'override_hostname_bash',
         'override_ip'
 ]
 
@@ -66,11 +67,17 @@ def conf_node(node_f, params, lines):
         globals_cfg = params['globals']
         for param, value in globals_cfg.iteritems():
             if param in globals_template:
+                if param == 'override_hostname_bash':
+                    param = 'override_hostname'
+                    print param, value
+                    bash_value = subprocess.Popen(value, shell=True, stdout=subprocess.PIPE)
+                    value = bash_value.communicate()[0].replace('\n','')
+                    print value
                 for i in range(0,len(lines)):
                     if param in lines[i]:
                         lines[i] = "  %s = %s\n" % (param,str(value))
                         break
-    
+    print "AFTER"
     aux_send_channel = 0	# Help finding the right block. 
     # Find index offset in lines for faster search
     for i in range(0,len(lines)):
@@ -128,19 +135,72 @@ def conf_node(node_f, params, lines):
                         lines[t] = "  %s = %s\n" % (param,str(value))
                         break
 
-    enable_gmond = True
-    if "enabled" in params and (str(params['enabled']).lower() == "off" or str(params['enabled']).lower() == "false"):
-        enable_gmond = False
-
     flocal_new = open(node_f, 'w')
     flocal_new.writelines(lines)
     flocal_new.close()
- 
-    return enable_gmond
 
+
+def atlas_auto_cfg(clines):
+    GangliaHeadnode = 'http://agm.cern.ch' 	# Default Ganglia collector
+
+    gsite_line = [ l for l in clines if l.startswith('GSITE') ]
+    gsite = str(gsite_line[0])
+    if not gsite:
+        print 'GSITE is not set in Condor cfg. Exiting'
+        return
+
+    PandaResource = gsite.replace(" ","").split('=')[1].replace('"','').replace('\n','')
+    atlas_JSON_url = GangliaHeadnode + "/atlas-gmond-cluster-cfg.json"
+    atlas_gmond_clusters = json.load(urllib2.urlopen(atlas_JSON_url))
+
+    if PandaResource in atlas_gmond_clusters:
+        # Basic info
+        try:
+            gmond_cluster = str(atlas_gmond_clusters[PandaResource]['ClusterName'])
+            gmond_port = atlas_gmond_clusters[PandaResource]['Port']
+        except KeyError:
+            print "JSON doesn't contain necessary info for gmond auto config"
+            return
+        except:
+            raise
+ 
+        if 'Host' in atlas_gmond_clusters[PandaResource]:
+            gmond_host = atlas_gmond_clusters[PandaResource]['Host']
+        else:
+            gmond_host = 'agm.cern.ch'
+    else:
+        print "%s Panda resource is not listed in ATLAS Ganglia cluster list. Exiting" % PandaResource
+        return 
+    
+    gmond_conf_file = '/etc/ganglia/gmond.conf'
+    with open(gmond_conf_file, 'r+') as g:
+        glines = g.readlines()
+        glines = [word.replace('mcast_join','#mcast_join') for word in glines]
+        for i in range(0,len(glines)):
+            if 'name = "unspecified"' in glines[i]:
+                glines[i] = '  name = "%s"\n' % gmond_cluster
+            if 'udp_send_channel {' in glines[i]:
+                glines[i] = 'udp_send_channel { \n  host = %s\n' % gmond_host
+            if 'port =' in glines[i]:
+                glines[i] = '  port = %s\n' % str(gmond_port)
+                break
+        g.seek(0)
+        g.writelines(glines)
+         
 
 def handle(_name, cfg, cloud, log, _args):
-    if 'ganglia' in cfg:
+    if 'ganglia' not in cfg:
+        condor_cfg = '/etc/condor/condor_config.local'
+        try:
+            with open(condor_cfg, 'r') as f:
+                clines = f.readlines()
+        except IOError:
+            print "Ganglia's auto-setup for gmond relies on Condor config file."
+            raise
+        except:
+            return
+        atlas_auto_cfg(clines)
+    else:        
         ganglia_cfg = cfg['ganglia']
 
         if 'install' in ganglia_cfg:
@@ -152,8 +212,7 @@ def handle(_name, cfg, cloud, log, _args):
         flocal = open(gmond_conf_file, 'r')     # Open to read all the file and then close it
         node_lines = flocal.readlines()
         flocal.close()
-        enable_gmond = conf_node(gmond_conf_file, ganglia_cfg, node_lines)
-        if enable_gmond:   
-            os.system('/etc/init.d/gmond restart ; /sbin/chkconfig gmond on')
-        else:
-            os.system('/etc/init.d/gmond stop')
+        
+        conf_node(gmond_conf_file, ganglia_cfg, node_lines)
+        
+    os.system('/etc/init.d/gmond restart ; /sbin/chkconfig gmond on')
