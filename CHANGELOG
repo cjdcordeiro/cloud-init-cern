@@ -1,5 +1,18 @@
-2.8 in Mon Mar 2 18:08:40 CET 2015
-  - add shoal to RPM
-  - 2.8
-  - updated shoal module. different cronfile with extra \n. Changed default values
-  - Adding RPM built from buildrelease script, on tag 2.7
+4.5 in Tue Oct 20 16:18:36 CEST 2015
+  - change defaults in cvmfs
+  - new param override_hostname_bash
+  - new ganglia module
+  - new tarball
+  - remove atlas default conf and enbale gmond status
+  - test push
+  - merge from devel
+  - Merge branch 'devel'
+  - Adding RPM built from buildrelease script, on tag 2.8
+  - Merge branch 'devel'
+  - erase testerasea3
+  - testerasea3
+  - testerasea3
+  - testerase3
+  - delete testerase2
+  - testerase2
+  - testerase
