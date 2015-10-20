@@ -1,5 +1,5 @@
 Name: cern-cloudinit-latest
-Version: 2
+Version: 4
 Release: 2.8
 Summary: CERN services (cvmfs, ganglia, shoal and condor) modules for CloudInit	
 Requires: cloud-init 
@@ -46,7 +46,8 @@ This will only install the Shoal module instead of installing all existing ones.
 rm -rf $RPM_BUILD_ROOT
 mkdir -p %{buildroot}%{python_sitelib}/cloudinit/config/
 mv cc*.py %{buildroot}%{python_sitelib}/cloudinit/config/
-
+rm -fr cc*.pyo
+rm -fr cc*.pyc
 
 %pre
 echo "Adding new modules to CloudInit..."
