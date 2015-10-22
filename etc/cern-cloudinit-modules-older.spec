@@ -1,6 +1,6 @@
 Name: cern-cloudinit-older
 Version: 4
-Release: 2.8
+Release: 4.5
 Summary: CERN services (shoal, cvmfs, ganglia and condor) modules for CloudInit	
 Requires: cloud-init 
 Conflicts: cloud-init >= 0.7.1
@@ -84,33 +84,33 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/CloudConfig/cc_condor.py
-%{python_sitelib}/cloudinit/CloudConfig/cc_cvmfs.py
-%{python_sitelib}/cloudinit/CloudConfig/cc_ganglia.py
-%{python_sitelib}/cloudinit/CloudConfig/cc_shoal.py
+%{python_sitelib}/cloudinit/CloudConfig/cc_condor.py*
+%{python_sitelib}/cloudinit/CloudConfig/cc_cvmfs.py*
+%{python_sitelib}/cloudinit/CloudConfig/cc_ganglia.py*
+%{python_sitelib}/cloudinit/CloudConfig/cc_shoal.py*
 
 
 %files cvmfs
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/CloudConfig/cc_cvmfs.py
+%{python_sitelib}/cloudinit/CloudConfig/cc_cvmfs.py*
 
 
 %files condor
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/CloudConfig/cc_condor.py
+%{python_sitelib}/cloudinit/CloudConfig/cc_condor.py*
 
 
 %files ganglia
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/CloudConfig/cc_ganglia.py
+%{python_sitelib}/cloudinit/CloudConfig/cc_ganglia.py*
 
 %files shoal
 %defattr(-,root,root,-)
 %config(noreplace)
-%{python_sitelib}/cloudinit/CloudConfig/cc_shoal.py
+%{python_sitelib}/cloudinit/CloudConfig/cc_shoal.py*
 
 %changelog
 * Mon Sep 9 2013 Cristóvão Cordeiro <cristovao.cordeiro@cern.ch> 
