@@ -23,7 +23,7 @@ import os
 
 template = {
     'CVMFS_QUOTA_LIMIT' : '8000',
-    'CVMFS_CACHE_BASE' : '/cvmfs_cache',
+    'CVMFS_CACHE_BASE' : '/scratch/cvmfs-cache',
     'CVMFS_MOUNT_RW' : 'yes'
 }
 
@@ -34,6 +34,7 @@ YUM_cmd = '/usr/bin/yum'
 SERVICE_cmd = '/sbin/service'
 CHK_cmd = '/sbin/chkconfig'
 CHOWN_cmd = '/bin/chown'
+CHMOD_cmd = '/bin/chmod'
 
 def install_cvmfs():
     try:
@@ -90,19 +91,22 @@ def install_cvmfs():
 
     os.system('sed -i s/SELINUX=enforcing/SELINUX=disabled/g /etc/selinux/config; echo 0 > /selinux/enforce')
 
-    try:
-        os.makedirs('/scratch/cvmfs2')
-    except OSError:
-        print 'Directory /scratch alreadys exists'
-         
-    subprocess.check_call([CHOWN_cmd,'-R','cvmfs:cvmfs','/scratch/cvmfs2'])
-
 
 def config_cvmfs(lfile, dfile, cmsfile, params):
   
     if 'install' in params:
         if params['install'] == True:
             install_cvmfs()
+
+    try:
+        os.makedirs('/scratch')
+    except OSError:
+        print 'Directory /scratch alreadys exists'
+    except:
+        raise
+
+    subprocess.check_call([CHMOD_cmd,'ugo+rwxt','/scratch'])
+
 
     if 'local' in params:
         local_args = params['local']
@@ -142,4 +146,4 @@ def handle(_name, cfg, cloud, log, _args):
   
     config_cvmfs(LocalFile, DomainFile, CMS_LocalFile, cvmfs_cfg)
 	
-    os.system("export PATH=${PATH}:/usr/bin:/sbin; cvmfs_config reload; cvmfs_config probe")
+    os.system("export PATH=${PATH}:/usr/bin:/sbin; /sbin/service autofs restart; cvmfs_config reload; cvmfs_config probe")
